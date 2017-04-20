@@ -11,10 +11,10 @@ namespace Project4
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
-        /*private Model model;
+        private Model model;
         private Matrix world = Matrix.CreateTranslation(new Vector3(0, 0, 0));
         private Matrix view = Matrix.CreateLookAt(new Vector3(0, 0, 10), new Vector3(0, 0, 0), Vector3.UnitY);
-        private Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45), 800f / 480f, 0.1f, 100f);*/
+        private Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45), 800f / 480f, 0.1f, 100f);
 
         public Game1()
         {
@@ -43,7 +43,7 @@ namespace Project4
         {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
-            //model = Content.Load<Model>("ship");
+            model = Content.Load<Model>("Ship");
 
             // TODO: use this.Content to load your game content here
         }
@@ -81,11 +81,11 @@ namespace Project4
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
             // TODO: Add your drawing code here
-            //DrawModel(model, world, view, projection);
-           // base.Draw(gameTime);
+           DrawModel(model, world, view, projection);
+           base.Draw(gameTime);
         }
 
-        /*private void DrawModel(Model model, Matrix world, Matrix view, Matrix projection)
+        private void DrawModel(Model model, Matrix world, Matrix view, Matrix projection)
         {
             foreach (ModelMesh mesh in model.Meshes)
             {
@@ -98,6 +98,6 @@ namespace Project4
 
                 mesh.Draw();
             }
-        }*/
+        }
     }
 }
