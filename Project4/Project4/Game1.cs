@@ -11,8 +11,10 @@ namespace Project4
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
-        private Model model;
+        private Model ship;
+        private Model asteroid1;
         private Matrix world = Matrix.CreateTranslation(new Vector3(0, 0, 0));
+        private Matrix worldAsteroidTemp = Matrix.CreateTranslation(new Vector3(5, 0, 0));
         private Matrix view = Matrix.CreateLookAt(new Vector3(0, 0, 10), new Vector3(0, 0, 0), Vector3.UnitY);
         private Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45), 800f / 480f, 0.1f, 100f);
 
@@ -43,7 +45,8 @@ namespace Project4
         {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
-            model = Content.Load<Model>("Ship");
+            ship = Content.Load<Model>("Models/Ship");
+            asteroid1 = Content.Load<Model>("Models/rock1");
 
             // TODO: use this.Content to load your game content here
         }
@@ -55,6 +58,7 @@ namespace Project4
         protected override void UnloadContent()
         {
             // TODO: Unload any non ContentManager content here
+            Content.Unload();
         }
 
         /// <summary>
@@ -81,7 +85,8 @@ namespace Project4
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
             // TODO: Add your drawing code here
-           DrawModel(model, world, view, projection);
+           DrawModel(ship, world, view, projection);
+           DrawModel(asteroid1, worldAsteroidTemp, view, projection);
            base.Draw(gameTime);
         }
 
