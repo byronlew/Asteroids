@@ -13,9 +13,12 @@ namespace Project4
         SpriteBatch spriteBatch;
         private Model ship;
         private Model asteroid1;
+
+        private Texture2D shipTexture;
+
         private Matrix world = Matrix.CreateTranslation(new Vector3(0, 0, 0));
         private Matrix worldAsteroidTemp = Matrix.CreateTranslation(new Vector3(5, 0, 0));
-        private Matrix view = Matrix.CreateLookAt(new Vector3(0, 0, 10), new Vector3(0, 0, 0), Vector3.UnitY);
+        private Matrix view = Matrix.CreateLookAt(new Vector3(0, 0, 20), new Vector3(0, 0, 0), Vector3.UnitY);
         private Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45), 800f / 480f, 0.1f, 100f);
 
         public Game1()
@@ -47,7 +50,7 @@ namespace Project4
             spriteBatch = new SpriteBatch(GraphicsDevice);
             ship = Content.Load<Model>("Models/Ship");
             asteroid1 = Content.Load<Model>("Models/rock1");
-
+            shipTexture = (Texture2D)Content.Load<Texture>("Textures/ship");
             // TODO: use this.Content to load your game content here
         }
 
@@ -96,6 +99,8 @@ namespace Project4
             {
                 foreach (BasicEffect effect in mesh.Effects)
                 {
+                    effect.TextureEnabled = true;
+                    effect.Texture = shipTexture;
                     effect.World = world;
                     effect.View = view;
                     effect.Projection = projection;
