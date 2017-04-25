@@ -18,7 +18,7 @@ namespace Project4
 
         private Matrix world = Matrix.CreateTranslation(new Vector3(0, 0, 0));
         private Matrix worldAsteroidTemp = Matrix.CreateTranslation(new Vector3(5, 0, 0));
-        private Matrix view = Matrix.CreateLookAt(new Vector3(0, 0, 20), new Vector3(0, 0, 0), Vector3.UnitY);
+        private Matrix view = Matrix.CreateLookAt(new Vector3(0, 50, 0), new Vector3(0, 0, 0), -Vector3.UnitX);
         private Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45), 800f / 480f, 0.1f, 100f);
 
         public Game1()
@@ -100,7 +100,7 @@ namespace Project4
                 foreach (BasicEffect effect in mesh.Effects)
                 {
                     effect.TextureEnabled = true;
-                    effect.Texture = shipTexture;
+                    effect.Texture = shipTexture; // currently textures everything as ship ?
                     effect.World = world;
                     effect.View = view;
                     effect.Projection = projection;
