@@ -1,0 +1,23 @@
+//Put in Loadcontent 
+
+skyboxTexture = Content.Load<TextureCube>("Skybox/SkyBoxTexture");
+skyboxEffect = Content.Load<Effect>("Skybox/skybox");
+
+//In draw 
+
+//renders skycube
+ 	foreach (EffectTechnique technique in skyboxEffect.Techniques)
+	{
+		foreach (EffectPass pass in technique.Passes)
+                {
+                    pass.Apply();
+
+                    skyboxEffect.Parameters["World"].SetValue(world * Matrix.CreateScale(cubeData[3].scale) * Matrix.CreateTranslation(cubeData[3].position));
+                    skyboxEffect.Parameters["View"].SetValue(view);
+                    skyboxEffect.Parameters["Projection"].SetValue(projection);
+                    skyboxEffect.Parameters["SkyBoxTexture"].SetValue(skyboxTexture);
+                    skyboxEffect.Parameters["CameraPosition"].SetValue(cameraPosition);
+
+                    cube.Render(GraphicsDevice);//renders the skycube
+                }
+            }
