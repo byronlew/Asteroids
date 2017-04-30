@@ -17,6 +17,8 @@ namespace Project4
 
         private Texture2D shipTexture;
         private Texture2D backdrop;
+        private float angle;
+        private KeyboardState oldState;
 
         private Matrix world = Matrix.CreateTranslation(new Vector3(0, 0, 0));
         private Matrix worldAsteroidTemp = Matrix.CreateTranslation(new Vector3(5, 0, 0));
@@ -53,6 +55,7 @@ namespace Project4
             asteroid1 = Content.Load<Model>("Models/rock1");
             shipTexture = (Texture2D)Content.Load<Texture>("Textures/ship");
             backdrop = (Texture2D)Content.Load<Texture>("Textures/galaxy");
+            angle = 0;
             // TODO: use this.Content to load your game content here
         }
 
@@ -77,6 +80,23 @@ namespace Project4
                 Exit();
 
             // TODO: Add your update logic here
+
+            KeyboardState newState = Keyboard.GetState();  // get the newest state
+
+            // handle the input
+            if (newState.IsKeyDown(Keys.Left))
+            {
+                angle += 0.03f;
+            }
+
+            else if (newState.IsKeyDown(Keys.Right))
+            {
+                angle -= 0.03f;
+            }
+
+            oldState = newState;  // set the new state as the old state for next time
+
+            world = Matrix.CreateRotationY(angle);
 
             base.Update(gameTime);
         }
