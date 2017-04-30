@@ -11,15 +11,17 @@ namespace Project4
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
+
         private Model ship;
         private Model asteroid1;
 
         private Texture2D shipTexture;
+        private Texture2D backdrop;
 
         private Matrix world = Matrix.CreateTranslation(new Vector3(0, 0, 0));
         private Matrix worldAsteroidTemp = Matrix.CreateTranslation(new Vector3(5, 0, 0));
-        private Matrix view = Matrix.CreateLookAt(new Vector3(0, 50, 0), new Vector3(0, 0, 0), -Vector3.UnitX);
-        private Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45), 800f / 480f, 0.1f, 100f);
+        private Matrix view = Matrix.CreateLookAt(new Vector3(0, 80, 0), new Vector3(0, 0, 0), -Vector3.UnitX);
+        private Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(100), 800f / 480f, 0.1f, 100f);
 
         public Game1()
         {
@@ -36,7 +38,6 @@ namespace Project4
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-
             base.Initialize();
         }
 
@@ -51,6 +52,7 @@ namespace Project4
             ship = Content.Load<Model>("Models/Ship");
             asteroid1 = Content.Load<Model>("Models/rock1");
             shipTexture = (Texture2D)Content.Load<Texture>("Textures/ship");
+            backdrop = (Texture2D)Content.Load<Texture>("Textures/galaxy");
             // TODO: use this.Content to load your game content here
         }
 
@@ -87,10 +89,16 @@ namespace Project4
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
+            spriteBatch.Begin();
+
+            spriteBatch.Draw(backdrop, new Rectangle(0, 0, 800, 480), Color.White);
+
+            spriteBatch.End();
+
             // TODO: Add your drawing code here
-           DrawModel(ship, world, view, projection);
-           DrawModel(asteroid1, worldAsteroidTemp, view, projection);
-           base.Draw(gameTime);
+            DrawModel(ship, world, view, projection);
+            DrawModel(asteroid1, worldAsteroidTemp, view, projection);
+            base.Draw(gameTime);
         }
 
         private void DrawModel(Model model, Matrix world, Matrix view, Matrix projection)
@@ -108,6 +116,6 @@ namespace Project4
 
                 mesh.Draw();
             }
-        }
+        }     
     }
 }
