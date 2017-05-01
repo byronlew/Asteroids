@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
@@ -7,13 +8,28 @@ namespace Project4
     /// <summary>
     /// This is the main type for your game.
     /// </summary>
+    /// 
+
+    
+
     public class Game1 : Game
     {
+
+
+
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
         private Model ship;
         private Model asteroid1;
+
+        private AsteroidType[] asteroidTypes;
+
+        private Asteroid[] asteroids;
+        private Asteroid test;
+
+        private int startingAsteroidCount = 50;
+        private int currentAsteroidCount = 50;
 
         private Texture2D shipTexture;
         private Texture2D rock1Texture;
@@ -23,9 +39,23 @@ namespace Project4
         private KeyboardState oldState;
 
         private Matrix world = Matrix.CreateTranslation(new Vector3(0, 0, 0));
-        private Matrix worldAsteroid = Matrix.CreateTranslation(new Vector3(0, 0, -60));
         private Matrix view = Matrix.CreateLookAt(new Vector3(0, 150, 0), new Vector3(0, 0, 0), -Vector3.UnitX);
         private Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(70), 800f / 480f, 0.01f, 1000f);
+
+        struct Asteroid
+        {
+            public AsteroidType type;
+            public Vector3 position;
+            public Vector3 velocity;
+            public int scale;
+
+        }
+
+        struct AsteroidType
+        {
+            public Model model;
+            public Texture2D texture;
+        }
 
         public Game1()
         {
@@ -41,8 +71,50 @@ namespace Project4
         /// </summary>
         protected override void Initialize()
         {
-            // TODO: Add your initialization logic here
+            //is it ok to load models in initialize?
+            asteroidTypes = new AsteroidType[3];
+            asteroidTypes[0].model = Content.Load<Model>("Models/rock1");
+            asteroidTypes[1].model = Content.Load<Model>("Models/rock2");
+            asteroidTypes[2].model = Content.Load<Model>("Models/rock3");
+            asteroidTypes[0].texture = (Texture2D)Content.Load<Texture>("Textures/rock1");
+            asteroidTypes[1].texture = (Texture2D)Content.Load<Texture>("Textures/rock2");
+            asteroidTypes[2].texture = (Texture2D)Content.Load<Texture>("Textures/rock3");
+
+            asteroids = new Asteroid[4*startingAsteroidCount];
+
+            //for loop:
+
+            test = new Asteroid();
+            test.type = asteroidTypes[random(0,2)]; // model
+            test.position = choosePosition();
+            test.velocity = chooseVelocity();
+            test.scale = 3; // maybe make weighted avg method if we want to vary this
+
             base.Initialize();
+        }
+
+        // pick a random velocity for an asteroid
+        private Vector3 chooseVelocity()
+        {
+            // calls random number method
+            return Vector3.Zero;
+        }
+
+        private Vector3 choosePosition()
+        {
+            return new Vector3(0, 0, -60);
+        }
+
+        // when asteroid reaches edge of field, randomly assign another position on the boundary
+        private Vector3 chooseEdgePosition()
+        {
+            return Vector3.Zero;
+        }
+
+        //selects random number from v1 to v2
+        private int random(int v1, int v2)
+        {
+            return 2;
         }
 
         /// <summary>
@@ -54,11 +126,13 @@ namespace Project4
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
             ship = Content.Load<Model>("Models/Ship");
-            asteroid1 = Content.Load<Model>("Models/rock1");
+            //asteroid1 = Content.Load<Model>("Models/rock1");
 
             shipTexture = (Texture2D)Content.Load<Texture>("Textures/ship");
             rock1Texture = (Texture2D)Content.Load<Texture>("Textures/rock1");
             backdrop = (Texture2D)Content.Load<Texture>("Textures/galaxy");
+
+            
 
             angle = 0;
             // TODO: use this.Content to load your game content here
@@ -122,7 +196,7 @@ namespace Project4
 
             // TODO: Add your drawing code here
             DrawModel(ship, world, view, projection, shipTexture);
-            DrawModel(asteroid1, worldAsteroid, view, projection, rock1Texture);
+            DrawModel(test.type.model, Matrix.CreateTranslation(test.position), view, projection, test.type.texture);
 
             base.Draw(gameTime);
         }
@@ -142,6 +216,8 @@ namespace Project4
 
                 mesh.Draw();
             }
-        }     
+        }
+
+
     }
 }
