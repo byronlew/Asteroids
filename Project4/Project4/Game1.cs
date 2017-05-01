@@ -16,14 +16,16 @@ namespace Project4
         private Model asteroid1;
 
         private Texture2D shipTexture;
+        private Texture2D rock1Texture;
         private Texture2D backdrop;
+
         private float angle;
         private KeyboardState oldState;
 
         private Matrix world = Matrix.CreateTranslation(new Vector3(0, 0, 0));
-        private Matrix worldAsteroidTemp = Matrix.CreateTranslation(new Vector3(5, 0, 0));
-        private Matrix view = Matrix.CreateLookAt(new Vector3(0, 80, 0), new Vector3(0, 0, 0), -Vector3.UnitX);
-        private Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(100), 800f / 480f, 0.1f, 100f);
+        private Matrix worldAsteroid = Matrix.CreateTranslation(new Vector3(0, 0, -60));
+        private Matrix view = Matrix.CreateLookAt(new Vector3(0, 150, 0), new Vector3(0, 0, 0), -Vector3.UnitX);
+        private Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(70), 800f / 480f, 0.01f, 1000f);
 
         public Game1()
         {
@@ -53,8 +55,11 @@ namespace Project4
             spriteBatch = new SpriteBatch(GraphicsDevice);
             ship = Content.Load<Model>("Models/Ship");
             asteroid1 = Content.Load<Model>("Models/rock1");
+
             shipTexture = (Texture2D)Content.Load<Texture>("Textures/ship");
+            rock1Texture = (Texture2D)Content.Load<Texture>("Textures/rock1");
             backdrop = (Texture2D)Content.Load<Texture>("Textures/galaxy");
+
             angle = 0;
             // TODO: use this.Content to load your game content here
         }
@@ -116,19 +121,20 @@ namespace Project4
             spriteBatch.End();
 
             // TODO: Add your drawing code here
-            DrawModel(ship, world, view, projection);
-            DrawModel(asteroid1, worldAsteroidTemp, view, projection);
+            DrawModel(ship, world, view, projection, shipTexture);
+            DrawModel(asteroid1, worldAsteroid, view, projection, rock1Texture);
+
             base.Draw(gameTime);
         }
 
-        private void DrawModel(Model model, Matrix world, Matrix view, Matrix projection)
+        private void DrawModel(Model model, Matrix world, Matrix view, Matrix projection, Texture2D texture)
         {
             foreach (ModelMesh mesh in model.Meshes)
             {
                 foreach (BasicEffect effect in mesh.Effects)
                 {
                     effect.TextureEnabled = true;
-                    effect.Texture = shipTexture; // currently textures everything as ship ?
+                    effect.Texture = texture;
                     effect.World = world;
                     effect.View = view;
                     effect.Projection = projection;
