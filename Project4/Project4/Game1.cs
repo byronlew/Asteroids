@@ -35,7 +35,10 @@ namespace Project4
         private Texture2D rock1Texture;
         private Texture2D backdrop;
 
-        private float angle;
+        private float xAngle;
+        private float yAngle;
+
+
         private KeyboardState oldState;
 
         private Matrix world = Matrix.CreateTranslation(new Vector3(0, 0, 0));
@@ -80,15 +83,24 @@ namespace Project4
             asteroidTypes[1].texture = (Texture2D)Content.Load<Texture>("Textures/rock2");
             asteroidTypes[2].texture = (Texture2D)Content.Load<Texture>("Textures/rock3");
 
-            asteroids = new Asteroid[4*startingAsteroidCount];
+            asteroids = new Asteroid[startingAsteroidCount];
 
             //for loop:
+            for(int i = 0; i < asteroids.Length; ++i)
+            {
+                asteroids[i] = new Asteroid();
+                asteroids[i].type = asteroidTypes[random(0, 2)]; // model
+                asteroids[i].position = choosePosition();
+                asteroids[i].velocity = chooseVelocity();
+                asteroids[i].scale = 3;
+            }
 
-            test = new Asteroid();
+
+            /*test = new Asteroid();
             test.type = asteroidTypes[random(0,2)]; // model
             test.position = choosePosition();
             test.velocity = chooseVelocity();
-            test.scale = 3; // maybe make weighted avg method if we want to vary this
+            test.scale = 3; */ // maybe make weighted avg method if we want to vary this
 
             base.Initialize();
         }
@@ -102,7 +114,7 @@ namespace Project4
 
         private Vector3 choosePosition()
         {
-            return new Vector3(0, 0, -60);
+            return new Vector3(random(-300,300), random(-300, 300), random(-300, 300));
         }
 
         // when asteroid reaches edge of field, randomly assign another position on the boundary
@@ -114,7 +126,13 @@ namespace Project4
         //selects random number from v1 to v2
         private int random(int v1, int v2)
         {
-            return 2;
+            Random rndNum = new Random(int.Parse(Guid.NewGuid().ToString().Substring(0, 8), System.Globalization.NumberStyles.HexNumber));
+
+            int rnd = rndNum.Next(v1, v2);
+
+            return rnd;
+
+
         }
 
         /// <summary>
@@ -126,15 +144,14 @@ namespace Project4
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
             ship = Content.Load<Model>("Models/Ship");
-            //asteroid1 = Content.Load<Model>("Models/rock1");
 
             shipTexture = (Texture2D)Content.Load<Texture>("Textures/ship");
             rock1Texture = (Texture2D)Content.Load<Texture>("Textures/rock1");
             backdrop = (Texture2D)Content.Load<Texture>("Textures/galaxy");
 
-            
 
-            angle = 0;
+            xAngle = 1;
+            yAngle = 0;
             // TODO: use this.Content to load your game content here
         }
 
@@ -164,18 +181,21 @@ namespace Project4
 
             // handle the input
             if (newState.IsKeyDown(Keys.Left))
-            {
-                angle += 0.03f;
-            }
-
+                yAngle += 0.03f;
+           
             else if (newState.IsKeyDown(Keys.Right))
-            {
-                angle -= 0.03f;
-            }
+                yAngle -= 0.03f;
 
-            oldState = newState;  // set the new state as the old state for next time
+            //Potential code for flipping the ship in 3D space
+            /* 
+            if (newState.IsKeyDown(Keys.Down))
+                xAngle += 0.03f;
 
-            world = Matrix.CreateRotationY(angle);
+            else if (newState.IsKeyDown(Keys.Up))
+                xAngle -= 0.03f;*/
+
+            world = Matrix.CreateRotationY(yAngle);
+            //world = Matrix.CreateRotationX(xAngle);
 
             base.Update(gameTime);
         }
@@ -189,14 +209,17 @@ namespace Project4
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
             spriteBatch.Begin();
-
-            spriteBatch.Draw(backdrop, new Rectangle(0, 0, 800, 480), Color.White);
-
+            spriteBatch.Draw(backdrop, new Rectangle(0, 0, 800, 480), Color.DarkGoldenrod);
             spriteBatch.End();
 
-            // TODO: Add your drawing code here
+            //Draw the ship at the origin
             DrawModel(ship, world, view, projection, shipTexture);
-            DrawModel(test.type.model, Matrix.CreateTranslation(test.position), view, projection, test.type.texture);
+
+            //Draw the array of asteroids 
+            for (int i = 0; i < asteroids.Length; ++i)
+            {
+                DrawModel(asteroids[i].type.model, Matrix.CreateTranslation(asteroids[i].position), view, projection, asteroids[i].type.texture);
+            }
 
             base.Draw(gameTime);
         }
@@ -217,7 +240,5 @@ namespace Project4
                 mesh.Draw();
             }
         }
-
-
     }
 }
