@@ -10,18 +10,12 @@ namespace Project4
     /// </summary>
     /// 
 
-    
-
     public class Game1 : Game
     {
-
-
-
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
         private Model ship;
-        private Model asteroid1;
 
         private AsteroidType[] asteroidTypes;
 
@@ -32,13 +26,11 @@ namespace Project4
         private int currentAsteroidCount = 50;
 
         private Texture2D shipTexture;
-        private Texture2D rock1Texture;
         private Texture2D backdrop;
 
         private float xAngle;
         private float yAngle;
-
-
+        
         private KeyboardState oldState;
 
         private Matrix world = Matrix.CreateTranslation(new Vector3(0, 0, 0));
@@ -51,7 +43,6 @@ namespace Project4
             public Vector3 position;
             public Vector3 velocity;
             public int scale;
-
         }
 
         struct AsteroidType
@@ -83,24 +74,17 @@ namespace Project4
             asteroidTypes[1].texture = (Texture2D)Content.Load<Texture>("Textures/rock2");
             asteroidTypes[2].texture = (Texture2D)Content.Load<Texture>("Textures/rock3");
 
-            asteroids = new Asteroid[startingAsteroidCount];
+            asteroids = new Asteroid[4 * startingAsteroidCount]; //space for max possible number of asteroids
 
             //for loop:
-            for(int i = 0; i < asteroids.Length; ++i)
+            for(int i = 0; i < startingAsteroidCount; ++i) //generating all initial asteroids
             {
                 asteroids[i] = new Asteroid();
-                asteroids[i].type = asteroidTypes[random(0, 2)]; // model
+                asteroids[i].type = asteroidTypes[random(0, 2)]; // pick random type
                 asteroids[i].position = choosePosition();
                 asteroids[i].velocity = chooseVelocity();
-                asteroids[i].scale = 3;
+                asteroids[i].scale = 3; // maybe make weighted avg method if we want to vary this
             }
-
-
-            /*test = new Asteroid();
-            test.type = asteroidTypes[random(0,2)]; // model
-            test.position = choosePosition();
-            test.velocity = chooseVelocity();
-            test.scale = 3; */ // maybe make weighted avg method if we want to vary this
 
             base.Initialize();
         }
@@ -131,8 +115,6 @@ namespace Project4
             int rnd = rndNum.Next(v1, v2);
 
             return rnd;
-
-
         }
 
         /// <summary>
@@ -146,13 +128,10 @@ namespace Project4
             ship = Content.Load<Model>("Models/Ship");
 
             shipTexture = (Texture2D)Content.Load<Texture>("Textures/ship");
-            rock1Texture = (Texture2D)Content.Load<Texture>("Textures/rock1");
             backdrop = (Texture2D)Content.Load<Texture>("Textures/galaxy");
-
 
             xAngle = 1;
             yAngle = 0;
-            // TODO: use this.Content to load your game content here
         }
 
         /// <summary>
@@ -216,7 +195,7 @@ namespace Project4
             DrawModel(ship, world, view, projection, shipTexture);
 
             //Draw the array of asteroids 
-            for (int i = 0; i < asteroids.Length; ++i)
+            for (int i = 0; i < currentAsteroidCount; ++i)
             {
                 DrawModel(asteroids[i].type.model, Matrix.CreateTranslation(asteroids[i].position), view, projection, asteroids[i].type.texture);
             }
