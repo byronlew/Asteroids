@@ -93,7 +93,9 @@ namespace Project4
         private Vector3 chooseVelocity()
         {
             // calls random number method
-            return Vector3.Zero;
+            int velocityRange = 20;
+
+            return new Vector3(random(-velocityRange, velocityRange), random(-velocityRange, velocityRange), random(-velocityRange, velocityRange));
         }
 
         private Vector3 choosePosition()
@@ -156,6 +158,10 @@ namespace Project4
 
             // TODO: Add your update logic here
 
+            float movementSpeed = gameTime.ElapsedGameTime.Milliseconds / 1000f; //* .75f;
+
+            incrementAsteroids(movementSpeed);
+
             KeyboardState newState = Keyboard.GetState();  // get the newest state
 
             // handle the input
@@ -177,6 +183,15 @@ namespace Project4
             //world = Matrix.CreateRotationX(xAngle);
 
             base.Update(gameTime);
+        }
+
+        private void incrementAsteroids(float updateSpeed)
+        {
+            //ballMovementSpeed = gameTime.ElapsedGameTime.Milliseconds / 1000f * .75f;
+
+            for (int i = 0; i < currentAsteroidCount; i++)
+                asteroids[i].position += asteroids[i].velocity * updateSpeed;
+
         }
 
         /// <summary>
