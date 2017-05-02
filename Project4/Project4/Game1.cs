@@ -32,6 +32,7 @@ namespace Project4
         private float yAngle;
         
         private KeyboardState oldState;
+        private int positionRange = 675;
 
         private Matrix world = Matrix.CreateTranslation(new Vector3(0, 0, 0));
         private Matrix view = Matrix.CreateLookAt(new Vector3(0, 150, 0), new Vector3(0, 0, 0), -Vector3.UnitX);
@@ -100,7 +101,6 @@ namespace Project4
 
         private Vector3 choosePosition()
         {
-            int positionRange = 675;
             return new Vector3(random(-positionRange, positionRange), random(-positionRange, positionRange), random(-positionRange, positionRange));
         }
 
@@ -192,7 +192,19 @@ namespace Project4
             //ballMovementSpeed = gameTime.ElapsedGameTime.Milliseconds / 1000f * .75f;
 
             for (int i = 0; i < currentAsteroidCount; i++)
+            {
                 asteroids[i].position += asteroids[i].velocity * updateSpeed;
+
+                if (asteroids[i].position.X > positionRange || asteroids[i].position.X < -positionRange)
+                    asteroids[i].position = choosePosition();
+
+                else if (asteroids[i].position.Y > positionRange || asteroids[i].position.Y < -positionRange)
+                    asteroids[i].position = choosePosition();
+
+                else if (asteroids[i].position.Z > positionRange || asteroids[i].position.Z < -positionRange)
+                    asteroids[i].position = choosePosition();
+            }
+                
 
         }
 
