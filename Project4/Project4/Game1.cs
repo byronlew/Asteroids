@@ -22,11 +22,15 @@ namespace Project4
         private Asteroid[] asteroids;
         private Asteroid test;
 
+        private Blast blast1;
+
         private int startingAsteroidCount = 50;
         private int currentAsteroidCount = 50;
 
         private Texture2D shipTexture;
+        private Texture2D blastTexture;
         private Texture2D backdrop;
+        
 
         private float zAngle;
         private float yAngle;
@@ -50,6 +54,15 @@ namespace Project4
         {
             public Model model;
             public Texture2D texture;
+        }
+
+        struct Blast
+        {
+            public Vector3 position; // should start at zero
+            public Vector3 velocity; // should be consistent
+            public float size;
+            public Texture2D texture;
+            //color? time to live (ends at asteroid, so may not be needed?)
         }
 
         public Game1()
@@ -133,6 +146,8 @@ namespace Project4
             shipTexture = (Texture2D)Content.Load<Texture>("Textures/ship");
             backdrop = (Texture2D)Content.Load<Texture>("Textures/galaxy");
 
+            blastTexture = (Texture2D)Content.Load<Texture>("Textures/blast");
+
             zAngle = 1;
             yAngle = 0;
         }
@@ -189,8 +204,6 @@ namespace Project4
 
         private void incrementAsteroids(float updateSpeed)
         {
-            //ballMovementSpeed = gameTime.ElapsedGameTime.Milliseconds / 1000f * .75f;
-
             for (int i = 0; i < currentAsteroidCount; i++)
             {
                 asteroids[i].position += asteroids[i].velocity * updateSpeed;
@@ -207,6 +220,17 @@ namespace Project4
                 
 
         }
+
+        private void incrementBlast(float updateSpeed)
+        {
+            blast1.position += blast1.velocity * updateSpeed;
+        }
+
+        private void shoot()
+        {
+            //creates new Blast at location of ship, figures out direction/velocity for it
+        }
+
 
         /// <summary>
         /// This is called when the game should draw itself.
