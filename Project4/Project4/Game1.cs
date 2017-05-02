@@ -208,6 +208,9 @@ namespace Project4
             spriteBatch.Draw(backdrop, new Rectangle(0, 0, 800, 480), Color.White);
             spriteBatch.End();
 
+            //Implements a z-buffer
+            GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+
             //Draw the ship at the origin
             DrawModel(ship, world, view, projection, shipTexture);
 
