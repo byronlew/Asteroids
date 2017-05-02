@@ -28,7 +28,7 @@ namespace Project4
         private Texture2D shipTexture;
         private Texture2D backdrop;
 
-        private float xAngle;
+        private float zAngle;
         private float yAngle;
         
         private KeyboardState oldState;
@@ -132,7 +132,7 @@ namespace Project4
             shipTexture = (Texture2D)Content.Load<Texture>("Textures/ship");
             backdrop = (Texture2D)Content.Load<Texture>("Textures/galaxy");
 
-            xAngle = 1;
+            zAngle = 1;
             yAngle = 0;
         }
 
@@ -171,15 +171,16 @@ namespace Project4
             else if (newState.IsKeyDown(Keys.Right))
                 yAngle -= 0.03f;
 
+   
             //Potential code for flipping the ship in 3D space
-            /* 
+
             if (newState.IsKeyDown(Keys.Down))
-                xAngle += 0.03f;
+                zAngle += 0.03f;
 
             else if (newState.IsKeyDown(Keys.Up))
-                xAngle -= 0.03f;*/
+                zAngle -= 0.03f;
 
-            world = Matrix.CreateRotationY(yAngle);
+            world = Matrix.CreateRotationZ(zAngle) * Matrix.CreateRotationY(yAngle);
             //world = Matrix.CreateRotationX(xAngle);
 
             base.Update(gameTime);
@@ -203,7 +204,7 @@ namespace Project4
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
             spriteBatch.Begin();
-            spriteBatch.Draw(backdrop, new Rectangle(0, 0, 800, 480), Color.DarkGoldenrod);
+            spriteBatch.Draw(backdrop, new Rectangle(0, 0, 800, 480), Color.White);
             spriteBatch.End();
 
             //Draw the ship at the origin
