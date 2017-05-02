@@ -114,7 +114,7 @@ namespace Project4
 
         private Vector3 choosePosition()
         {
-            return new Vector3(random(-300,300), random(-300, 300), random(-300, 300));
+            return new Vector3(random(-675, 675), random(-675, 675), random(-675, 675));
         }
 
         // when asteroid reaches edge of field, randomly assign another position on the boundary
@@ -230,6 +230,7 @@ namespace Project4
             {
                 foreach (BasicEffect effect in mesh.Effects)
                 {
+                    effect.EnableDefaultLighting();
                     effect.TextureEnabled = true;
                     effect.Texture = texture;
                     effect.World = world;
