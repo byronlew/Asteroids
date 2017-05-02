@@ -20,7 +20,6 @@ namespace Project4
         private AsteroidType[] asteroidTypes;
 
         private Asteroid[] asteroids;
-        private Asteroid test;
 
         private Blast blast1;
 
@@ -30,7 +29,8 @@ namespace Project4
         private Texture2D shipTexture;
         private Texture2D blastTexture;
         private Texture2D backdrop;
-        
+
+        public Vector3 shipOrientation = Vector3.Zero;
 
         private float zAngle;
         private float yAngle;
@@ -180,21 +180,37 @@ namespace Project4
 
             KeyboardState newState = Keyboard.GetState();  // get the newest state
 
+            //Shoots a blast 
+            if (newState.IsKeyDown(Keys.Space))
+                shoot();
+
             // handle the input
             if (newState.IsKeyDown(Keys.Left))
+            {
                 yAngle += 0.03f;
+                shipOrientation.Y += 0.03f;
+            }
+                
            
             else if (newState.IsKeyDown(Keys.Right))
+            {
                 yAngle -= 0.03f;
+                shipOrientation.Y -= 0.03f;
+            }
 
-   
+
             //Potential code for flipping the ship in 3D space
-
             if (newState.IsKeyDown(Keys.Down))
+            {
                 zAngle += 0.03f;
+                shipOrientation.Z += 0.03f;
+            }
 
             else if (newState.IsKeyDown(Keys.Up))
+            {
                 zAngle -= 0.03f;
+                shipOrientation.Z -= 0.03f;
+            }
 
             world = Matrix.CreateRotationZ(zAngle) * Matrix.CreateRotationY(yAngle);
             //world = Matrix.CreateRotationX(xAngle);
@@ -217,8 +233,6 @@ namespace Project4
                 else if (asteroids[i].position.Z > positionRange || asteroids[i].position.Z < -positionRange)
                     asteroids[i].position = choosePosition();
             }
-                
-
         }
 
         private void incrementBlast(float updateSpeed)
@@ -229,6 +243,13 @@ namespace Project4
         private void shoot()
         {
             //creates new Blast at location of ship, figures out direction/velocity for it
+            Blast blast1 = new Blast();
+            blast1.position = Vector3.Zero;
+            blast1.texture = blastTexture;
+            blast1.size = 1;
+            blast1.velocity = new Vector3(20f);
+
+
         }
 
 
@@ -238,6 +259,7 @@ namespace Project4
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
+           // Matrix billboard = Matrix.CreateBillboard(shipOrientation, )
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
             spriteBatch.Begin();
