@@ -100,7 +100,8 @@ namespace Project4
 
         private Vector3 choosePosition()
         {
-            return new Vector3(random(-675, 675), random(-675, 675), random(-675, 675));
+            int positionRange = 675;
+            return new Vector3(random(-positionRange, positionRange), random(-positionRange, positionRange), random(-positionRange, positionRange));
         }
 
         // when asteroid reaches edge of field, randomly assign another position on the boundary
