@@ -12,6 +12,8 @@ namespace Project4
 
     public class Game1 : Game
     {
+        //Private variables to be used
+        #region Private variables
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
@@ -23,14 +25,20 @@ namespace Project4
 
         private Blast blast1;
 
-        private int startingAsteroidCount = 50;
-        private int currentAsteroidCount = 50;
+        private int startingAsteroidCount = 500;
+        private int currentAsteroidCount = 500;
 
+
+        //USED FOR TESTING COLLISON DETECTION 
+        private Texture2D hitShipTexture;
+        private Texture2D tempTexture; 
+        
         private Texture2D shipTexture;
         private Texture2D blastTexture;
         private Texture2D backdrop;
 
         public Vector3 shipOrientation = Vector3.Zero;
+        public Vector3 shipLocation = Vector3.Zero;
 
         private float zAngle;
         private float yAngle;
@@ -42,6 +50,7 @@ namespace Project4
         private Matrix view = Matrix.CreateLookAt(new Vector3(0, 150, 0), new Vector3(0, 0, 0), -Vector3.UnitX);
         private Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(70), 800f / 480f, 0.01f, 1000f);
 
+        #endregion
         struct Asteroid
         {
             public AsteroidType type;
@@ -97,7 +106,7 @@ namespace Project4
                 asteroids[i].type = asteroidTypes[random(0, 2)]; // pick random type
                 asteroids[i].position = choosePosition();
                 asteroids[i].velocity = chooseVelocity();
-                asteroids[i].scale = 3; // maybe make weighted avg method if we want to vary this
+                asteroids[i].scale = 3; //maybe make weighted avg method if we want to vary this
             }
 
             base.Initialize();
@@ -143,8 +152,12 @@ namespace Project4
             spriteBatch = new SpriteBatch(GraphicsDevice);
             ship = Content.Load<Model>("Models/Ship");
 
+            //USED FOR COLLISON DETECTION
+            hitShipTexture = (Texture2D)Content.Load<Texture>("Textures/hitShip");
+
             shipTexture = (Texture2D)Content.Load<Texture>("Textures/ship");
             backdrop = (Texture2D)Content.Load<Texture>("Textures/galaxy");
+            tempTexture = shipTexture;
 
             blastTexture = (Texture2D)Content.Load<Texture>("Textures/blast");
 
@@ -173,6 +186,7 @@ namespace Project4
                 Exit();
 
             // TODO: Add your update logic here
+            Matrix shipWorldMatrix = Matrix.CreateTranslation(shipLocation);
 
             float movementSpeed = gameTime.ElapsedGameTime.Milliseconds / 1000f; //* .75f;
 
@@ -184,7 +198,9 @@ namespace Project4
             if (newState.IsKeyDown(Keys.Space))
                 shoot();
 
-            // handle the input
+            //Ship  Movement
+            #region ShipMovement
+            //Ship rotation 
             if (newState.IsKeyDown(Keys.Left))
             {
                 yAngle += 0.03f;
@@ -199,7 +215,7 @@ namespace Project4
             }
 
 
-            //Potential code for flipping the ship in 3D space
+            //Flipping the ship in 3D space
             if (newState.IsKeyDown(Keys.Down))
             {
                 zAngle += 0.03f;
@@ -213,8 +229,19 @@ namespace Project4
             }
 
             world = Matrix.CreateRotationZ(zAngle) * Matrix.CreateRotationY(yAngle);
-            //world = Matrix.CreateRotationX(xAngle);
+            #endregion
 
+            for (int i = 0; i < currentAsteroidCount; ++i)
+            {
+                Matrix asteroidLocation = Matrix.CreateTranslation(asteroids[i].position);
+                if (IsCollision(ship, shipWorldMatrix, asteroids[i].type.model, asteroidLocation))
+                {
+                    Console.WriteLine("Ship Hit! by Asteroid "+ i);
+                    shipTexture = hitShipTexture;
+                }
+            }
+
+            //shipTexture = tempTexture;
             base.Update(gameTime);
         }
 
@@ -248,8 +275,6 @@ namespace Project4
             blast1.texture = blastTexture;
             blast1.size = 1;
             blast1.velocity = new Vector3(20f);
-
-
         }
 
 
@@ -275,7 +300,23 @@ namespace Project4
             //Draw the array of asteroids 
             for (int i = 0; i < currentAsteroidCount; ++i)
             {
+                Matrix asteroidLocation = Matrix.CreateTranslation(asteroids[i].position);
+
+                //Draw current asteroid
                 DrawModel(asteroids[i].type.model, Matrix.CreateTranslation(asteroids[i].position), view, projection, asteroids[i].type.texture);
+
+                //Ensures Asteroids are not drawn on top of each other, 
+                //if current asteroid is drawn withing bounding sphere of previous asteroids, it is redrawn at a new location
+
+                //NOT WORKING ATM 
+                /*for (int j = 0; j < i; ++j)
+                {
+                    Matrix asteroid2Location = Matrix.CreateTranslation(asteroids[i].position);
+                    if (IsCollision(asteroids[j].type.model, asteroid2Location, asteroids[i].type.model, asteroidLocation))
+                    {
+                        DrawModel(asteroids[i].type.model, Matrix.CreateTranslation(choosePosition()), view, projection, asteroids[i].type.texture);
+                    }
+                }*/
             }
 
             base.Draw(gameTime);
@@ -298,5 +339,26 @@ namespace Project4
                 mesh.Draw();
             }
         }
+
+        //Checks for collision between 2 models 
+        private bool IsCollision(Model model1, Matrix world1, Model model2, Matrix world2)
+        {
+            for (int meshIndex1 = 0; meshIndex1 < model1.Meshes.Count; meshIndex1++)
+            {
+                BoundingSphere sphere1 = model1.Meshes[meshIndex1].BoundingSphere;
+                sphere1 = sphere1.Transform(world1);
+
+                for (int meshIndex2 = 0; meshIndex2 < model2.Meshes.Count; meshIndex2++)
+                {
+                    BoundingSphere sphere2 = model2.Meshes[meshIndex2].BoundingSphere;
+                    sphere2 = sphere2.Transform(world2);
+
+                    if (sphere1.Intersects(sphere2))
+                        return true;
+                }
+            }
+            return false;
+        }
+
     }
 }
