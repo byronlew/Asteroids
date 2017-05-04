@@ -174,6 +174,7 @@ namespace Project4
         }
 
         //selects random number from v1 to v2
+        //NEED TO CHANGE 
         private int random(int v1, int v2)
         {
             Random rndNum = new Random(int.Parse(Guid.NewGuid().ToString().Substring(0, 8), System.Globalization.NumberStyles.HexNumber));
@@ -194,13 +195,13 @@ namespace Project4
             ship = Content.Load<Model>("Models/Ship");
 
             //USED FOR COLLISON DETECTION
-            hitShipTexture = (Texture2D)Content.Load<Texture>("Textures/hitShip");
+            hitShipTexture = Content.Load<Texture2D>("Textures/hitShip");
 
-            shipTexture = (Texture2D)Content.Load<Texture>("Textures/ship");
-            backdrop = (Texture2D)Content.Load<Texture>("Textures/galaxy");
+            shipTexture = Content.Load<Texture2D>("Textures/ship");
+            backdrop = Content.Load<Texture2D>("Textures/galaxy");
             tempTexture = shipTexture;
 
-            blastTexture = (Texture2D)Content.Load<Texture>("Textures/blast");
+            blastTexture = Content.Load<Texture2D>("Textures/blast");
 
             zAngle = 1;
             yAngle = 0;
