@@ -12,9 +12,17 @@ namespace Project4
 
     public class Game1 : Game
     {
+
+        public GraphicsDevice device;
+
         //Private variables to be used
         #region Private variables
+
+        //for blast
+        public static VertexBuffer vertexBuffer;
+
         GraphicsDeviceManager graphics;
+        BasicEffect basicEffect;
         SpriteBatch spriteBatch;
 
         private Model ship;
@@ -46,6 +54,8 @@ namespace Project4
         private KeyboardState oldState;
         private int positionRange = 675;
 
+        //private Vector3 cameraForward = -Vector3.UnitX;
+
         private Matrix world = Matrix.CreateTranslation(new Vector3(0, 0, 0));
         private Matrix view = Matrix.CreateLookAt(new Vector3(0, 150, 0), new Vector3(0, 0, 0), -Vector3.UnitX);
         private Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(70), 800f / 480f, 0.01f, 1000f);
@@ -72,6 +82,7 @@ namespace Project4
             public float size;
             public Texture2D texture;
             //color? time to live (ends at asteroid, so may not be needed?)
+            //public static VertexBuffer vertexBuffer;
         }
 
         public Game1()
@@ -108,6 +119,32 @@ namespace Project4
                 asteroids[i].velocity = chooseVelocity();
                 asteroids[i].scale = 3; //maybe make weighted avg method if we want to vary this
             }
+
+            //blast initialization. Dr. Wittman's particle code
+
+            //device = new GraphicsDevice();
+            /*
+            basicEffect = new BasicEffect(device); //or graphicsdevice??
+
+            VertexPositionColorTexture[] vertices = new VertexPositionColorTexture[6];
+
+            Vector2 upperLeft = new Vector2(0, 0);
+            Vector2 lowerLeft = new Vector2(0, 1);
+            Vector2 upperRight = new Vector2(1, 0);
+            Vector2 lowerRight = new Vector2(1, 1);
+
+            vertices[0] = new VertexPositionColorTexture(new Vector3(1, 1, 0), Color.White, upperRight);
+            vertices[1] = new VertexPositionColorTexture(new Vector3(1, -1, 0), Color.White, lowerRight);
+            vertices[2] = new VertexPositionColorTexture(new Vector3(-1, -1, 0), Color.White, lowerLeft);
+
+            vertices[3] = new VertexPositionColorTexture(new Vector3(1, 1, 0), Color.White, upperRight);
+            vertices[4] = new VertexPositionColorTexture(new Vector3(-1, -1, 0), Color.White, lowerLeft);
+            vertices[5] = new VertexPositionColorTexture(new Vector3(-1, 1, 0), Color.White, upperLeft);
+
+            vertexBuffer = new VertexBuffer(device, typeof(VertexPositionColorTexture), vertices.Length, BufferUsage.WriteOnly);
+            vertexBuffer.SetData<VertexPositionColorTexture>(vertices);
+
+            */
 
             base.Initialize();
         }
@@ -231,6 +268,11 @@ namespace Project4
             world = Matrix.CreateRotationZ(zAngle) * Matrix.CreateRotationY(yAngle);
             #endregion
 
+
+            //cameraForward = world.Forward;
+            //cameraRight = world.Right;
+            //cameraUp = world.Up;
+
             for (int i = 0; i < currentAsteroidCount; ++i)
             {
                 Matrix asteroidLocation = Matrix.CreateTranslation(asteroids[i].position);
@@ -242,6 +284,11 @@ namespace Project4
             }
 
             //shipTexture = tempTexture;
+
+            //for any blasts, eventually
+            incrementBlast(movementSpeed);
+
+
             base.Update(gameTime);
         }
 
@@ -319,7 +366,35 @@ namespace Project4
                 }*/
             }
 
+            //DrawBlast(blast1, basicEffect, world.Right, world.Up, world.Forward);
+
+
+
             base.Draw(gameTime);
+        }
+
+        private void DrawBlast(Blast blast, BasicEffect effect, Vector3 camera, Vector3 cameraUp, Vector3 cameraForward)
+        {
+            //mostly Dr. Wittman's Particle code
+
+            Matrix billboard = Matrix.CreateBillboard(blast.position, camera, cameraUp, cameraForward);
+            effect.World = Matrix.CreateScale(blast.size) * billboard;
+            //effect.DiffuseColor = blast.color.toVector3();
+            //effect.Alpha = blast.color.A / 255f
+            effect.Texture = blast.texture; // or blastTexture
+            effect.TextureEnabled = true;
+            effect.LightingEnabled = false;
+            effect.PreferPerPixelLighting = false;
+
+            //GraphicsDevice device = effect.GraphicsDevice;
+            device.SetVertexBuffer(vertexBuffer);
+
+            foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                effect.GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, 2);
+            }
+
         }
 
         private void DrawModel(Model model, Matrix world, Matrix view, Matrix projection, Texture2D texture)
