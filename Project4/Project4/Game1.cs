@@ -108,6 +108,9 @@ namespace Project4
         /// </summary>
         protected override void Initialize()
         {
+
+            //GraphicsDevice.g
+
             //is it ok to load models in initialize?
             asteroidTypes = new AsteroidType[3];
             asteroidTypes[0].model = Content.Load<Model>("Models/rock1");
@@ -133,7 +136,9 @@ namespace Project4
             //Creates new list of blasts 
             blastList = new List<Blast>();
 
-            basicEffect = new BasicEffect(device); //or graphicsdevice??
+            float scale = .25f;
+
+            basicEffect = new BasicEffect(GraphicsDevice); //or graphicsdevice??
 
             VertexPositionColorTexture[] vertices = new VertexPositionColorTexture[6];
 
@@ -142,15 +147,17 @@ namespace Project4
             Vector2 upperRight = new Vector2(1, 0);
             Vector2 lowerRight = new Vector2(1, 1);
 
-            vertices[0] = new VertexPositionColorTexture(new Vector3(1, 1, 0), Color.White, upperRight);
-            vertices[1] = new VertexPositionColorTexture(new Vector3(1, -1, 0), Color.White, lowerRight);
-            vertices[2] = new VertexPositionColorTexture(new Vector3(-1, -1, 0), Color.White, lowerLeft);
+            vertices[0] = new VertexPositionColorTexture(scale*new Vector3(1, 1, 0), Color.White, upperRight);
+            vertices[1] = new VertexPositionColorTexture(scale*new Vector3(1, -1, 0), Color.White, lowerRight);
+            vertices[2] = new VertexPositionColorTexture(scale*new Vector3(-1, -1, 0), Color.White, lowerLeft);
 
-            vertices[3] = new VertexPositionColorTexture(new Vector3(1, 1, 0), Color.White, upperRight);
-            vertices[4] = new VertexPositionColorTexture(new Vector3(-1, -1, 0), Color.White, lowerLeft);
-            vertices[5] = new VertexPositionColorTexture(new Vector3(-1, 1, 0), Color.White, upperLeft);
+            vertices[3] = new VertexPositionColorTexture(scale*new Vector3(1, 1, 0), Color.White, upperRight);
+            vertices[4] = new VertexPositionColorTexture(scale*new Vector3(-1, -1, 0), Color.White, lowerLeft);
+            vertices[5] = new VertexPositionColorTexture(scale*new Vector3(-1, 1, 0), Color.White, upperLeft);
 
-            vertexBuffer = new VertexBuffer(device, typeof(VertexPositionColorTexture), vertices.Length, BufferUsage.WriteOnly);
+            //vertices *= Matrix.CreateScale(.25f);
+
+            vertexBuffer = new VertexBuffer(basicEffect.GraphicsDevice, typeof(VertexPositionColorTexture), vertices.Length, BufferUsage.WriteOnly);
             vertexBuffer.SetData<VertexPositionColorTexture>(vertices);
 
             base.Initialize();
@@ -206,6 +213,7 @@ namespace Project4
             tempTexture = shipTexture;
 
             blastTexture = Content.Load<Texture2D>("Textures/blast");
+            
 
             zAngle = 1;
             yAngle = 0;
@@ -410,7 +418,9 @@ namespace Project4
             effect.PreferPerPixelLighting = false;
 
             //GraphicsDevice device = effect.GraphicsDevice;
-            device.SetVertexBuffer(vertexBuffer);
+            //device.SetVertexBuffer(vertexBuffer);
+            GraphicsDevice.SetVertexBuffer(vertexBuffer);
+
 
             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
             {
