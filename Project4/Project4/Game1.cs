@@ -35,6 +35,7 @@ namespace Project4
 
         private int startingAsteroidCount = 500;
         private int currentAsteroidCount = 500;
+        private int asteroidIndex = 500;
 
 
         //USED FOR TESTING COLLISON DETECTION 
@@ -67,6 +68,7 @@ namespace Project4
             public Vector3 position;
             public Vector3 velocity;
             public int scale;
+            public bool current;
         }
 
         struct AsteroidType
@@ -118,6 +120,7 @@ namespace Project4
                 asteroids[i].position = choosePosition();
                 asteroids[i].velocity = chooseVelocity();
                 asteroids[i].scale = 3; //maybe make weighted avg method if we want to vary this
+                asteroids[i].current = true;
             }
 
             //blast initialization. Dr. Wittman's particle code
@@ -273,13 +276,15 @@ namespace Project4
             //cameraRight = world.Right;
             //cameraUp = world.Up;
 
-            for (int i = 0; i < currentAsteroidCount; ++i)
+            for (int i = 0; i < asteroidIndex; ++i)
             {
-                Matrix asteroidLocation = Matrix.CreateTranslation(asteroids[i].position);
-                if (IsCollision(ship, shipWorldMatrix, asteroids[i].type.model, asteroidLocation))
-                {
-                    Console.WriteLine("Ship Hit! by Asteroid "+ i);
-                    shipTexture = hitShipTexture;
+                if (asteroids[asteroidIndex].current) { 
+                    Matrix asteroidLocation = Matrix.CreateTranslation(asteroids[i].position);
+                    if (IsCollision(ship, shipWorldMatrix, asteroids[i].type.model, asteroidLocation))
+                    {
+                        Console.WriteLine("Ship Hit! by Asteroid " + i);
+                        shipTexture = hitShipTexture;
+                    }
                 }
             }
 
@@ -345,30 +350,31 @@ namespace Project4
             DrawModel(ship, world, view, projection, shipTexture);
 
             //Draw the array of asteroids 
-            for (int i = 0; i < currentAsteroidCount; ++i)
+            for (int i = 0; i < asteroidIndex; ++i)
             {
-                Matrix asteroidLocation = Matrix.CreateTranslation(asteroids[i].position);
-
-                //Draw current asteroid
-                DrawModel(asteroids[i].type.model, Matrix.CreateTranslation(asteroids[i].position), view, projection, asteroids[i].type.texture);
-
-                //Ensures Asteroids are not drawn on top of each other, 
-                //if current asteroid is drawn withing bounding sphere of previous asteroids, it is redrawn at a new location
-
-                //NOT WORKING ATM 
-                /*for (int j = 0; j < i; ++j)
+                if (asteroids[i].current)
                 {
-                    Matrix asteroid2Location = Matrix.CreateTranslation(asteroids[i].position);
-                    if (IsCollision(asteroids[j].type.model, asteroid2Location, asteroids[i].type.model, asteroidLocation))
+                    Matrix asteroidLocation = Matrix.CreateTranslation(asteroids[i].position);
+
+                    //Draw current asteroid
+                    DrawModel(asteroids[i].type.model, Matrix.CreateTranslation(asteroids[i].position), view, projection, asteroids[i].type.texture);
+
+                    //Ensures Asteroids are not drawn on top of each other, 
+                    //if current asteroid is drawn withing bounding sphere of previous asteroids, it is redrawn at a new location
+
+                    //NOT WORKING ATM 
+                    /*for (int j = 0; j < i; ++j)
                     {
-                        DrawModel(asteroids[i].type.model, Matrix.CreateTranslation(choosePosition()), view, projection, asteroids[i].type.texture);
-                    }
-                }*/
+                        Matrix asteroid2Location = Matrix.CreateTranslation(asteroids[i].position);
+                        if (IsCollision(asteroids[j].type.model, asteroid2Location, asteroids[i].type.model, asteroidLocation))
+                        {
+                            DrawModel(asteroids[i].type.model, Matrix.CreateTranslation(choosePosition()), view, projection, asteroids[i].type.texture);
+                        }
+                    }*/
+                }
             }
 
             //DrawBlast(blast1, basicEffect, world.Right, world.Up, world.Forward);
-
-
 
             base.Draw(gameTime);
         }
@@ -433,6 +439,23 @@ namespace Project4
                 }
             }
             return false;
+        }
+
+        private void breakApart(Asteroid asteroid)
+        {
+            //condition: if the asteroid is smallest
+                //asteroid[i].current = false;
+                //count--
+
+            //else:
+            
+            //take current asteroid and halve its size. figure out scaling matrix
+
+            //duplicate that asteroid
+
+            //put new asteroid into asteroids[asteroidIndex]
+            //then increment asteroidIndex
+            //increment currentAsteroidCount
         }
 
     }
