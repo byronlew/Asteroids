@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System.Collections.Generic;
 
 namespace Project4
 {
@@ -15,6 +16,7 @@ namespace Project4
 
         public GraphicsDevice device;
 
+
         //Private variables to be used
         #region Private variables
 
@@ -25,12 +27,16 @@ namespace Project4
         BasicEffect basicEffect;
         SpriteBatch spriteBatch;
 
+        private Random getRandom = new Random();
+
         private bool hit = false;
         private Model ship;
 
         private AsteroidType[] asteroidTypes;
 
         private Asteroid[] asteroids;
+
+        private List<Blast> blastList;
 
         private Blast blast1;
 
@@ -124,10 +130,9 @@ namespace Project4
                 asteroids[i].current = true;
             }
 
-            //blast initialization. Dr. Wittman's particle code
+            //Creates new list of blasts 
+            blastList = new List<Blast>();
 
-            //device = new GraphicsDevice();
-            
             basicEffect = new BasicEffect(device); //or graphicsdevice??
 
             VertexPositionColorTexture[] vertices = new VertexPositionColorTexture[6];
@@ -148,11 +153,10 @@ namespace Project4
             vertexBuffer = new VertexBuffer(device, typeof(VertexPositionColorTexture), vertices.Length, BufferUsage.WriteOnly);
             vertexBuffer.SetData<VertexPositionColorTexture>(vertices);
 
-            
-
             base.Initialize();
         }
 
+        #region Asteroid Stuff
         // pick a random velocity for an asteroid
         private Vector3 chooseVelocity()
         {
@@ -176,13 +180,13 @@ namespace Project4
         //selects random number from v1 to v2
         //NEED TO CHANGE 
         private int random(int v1, int v2)
-        {
-            Random rndNum = new Random(int.Parse(Guid.NewGuid().ToString().Substring(0, 8), System.Globalization.NumberStyles.HexNumber));
+        { 
 
-            int rnd = rndNum.Next(v1, v2);
+            int rnd = getRandom.Next(v1, v2+1);
 
             return rnd;
         }
+        #endregion
 
         /// <summary>
         /// LoadContent will be called once per game and is the place to load
@@ -331,11 +335,13 @@ namespace Project4
         private void shoot()
         {
             //creates new Blast at location of ship, figures out direction/velocity for it
-            Blast blast1 = new Blast();
+            blast1 = new Blast();
             blast1.position = Vector3.Zero;
             blast1.texture = blastTexture;
             blast1.size = 1;
-            blast1.velocity = new Vector3(20f);
+            blast1.velocity = world.Up;
+
+            blastList.Add(blast1);
         }
 
 
@@ -383,8 +389,10 @@ namespace Project4
                 }
             }
 
-            //DrawBlast(blast1, basicEffect, world.Right, world.Up, world.Forward);
-
+            foreach(var blast in blastList){
+                DrawBlast(blast, basicEffect, world.Right, world.Up, world.Forward);
+            }
+           
             base.Draw(gameTime);
         }
 
