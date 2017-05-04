@@ -25,6 +25,7 @@ namespace Project4
         BasicEffect basicEffect;
         SpriteBatch spriteBatch;
 
+        private bool hit = false;
         private Model ship;
 
         private AsteroidType[] asteroidTypes;
@@ -126,7 +127,7 @@ namespace Project4
             //blast initialization. Dr. Wittman's particle code
 
             //device = new GraphicsDevice();
-            /*
+            
             basicEffect = new BasicEffect(device); //or graphicsdevice??
 
             VertexPositionColorTexture[] vertices = new VertexPositionColorTexture[6];
@@ -147,7 +148,7 @@ namespace Project4
             vertexBuffer = new VertexBuffer(device, typeof(VertexPositionColorTexture), vertices.Length, BufferUsage.WriteOnly);
             vertexBuffer.SetData<VertexPositionColorTexture>(vertices);
 
-            */
+            
 
             base.Initialize();
         }
@@ -276,22 +277,29 @@ namespace Project4
             //cameraRight = world.Right;
             //cameraUp = world.Up;
 
+            //Detects if ship is hit by asteroid 
             for (int i = 0; i < asteroidIndex; ++i)
             {
-                if (asteroids[asteroidIndex].current) { 
+                if (asteroids[asteroidIndex].current)
+                {
                     Matrix asteroidLocation = Matrix.CreateTranslation(asteroids[i].position);
                     if (IsCollision(ship, shipWorldMatrix, asteroids[i].type.model, asteroidLocation))
                     {
                         Console.WriteLine("Ship Hit! by Asteroid " + i);
-                        shipTexture = hitShipTexture;
+                        hit = false;
                     }
                 }
             }
 
-            //shipTexture = tempTexture;
-
             //for any blasts, eventually
-            incrementBlast(movementSpeed);
+
+            //Ship will turn red if hit by asteroid: testing purposes
+            if (!hit)
+                shipTexture = hitShipTexture;
+            else
+                shipTexture = tempTexture;
+
+            hit = true;
 
 
             base.Update(gameTime);
@@ -421,7 +429,8 @@ namespace Project4
             }
         }
 
-        //Checks for collision between 2 models 
+        //Checks for collision between 2 models
+        //Credit to RB Whitaker
         private bool IsCollision(Model model1, Matrix world1, Model model2, Matrix world2)
         {
             for (int meshIndex1 = 0; meshIndex1 < model1.Meshes.Count; meshIndex1++)
