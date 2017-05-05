@@ -13,9 +13,7 @@ namespace Project4
 
     public class Game1 : Game
     {
-
         public GraphicsDevice device;
-
 
         //Private variables to be used
         #region Private variables
@@ -42,8 +40,8 @@ namespace Project4
 
         private Blast blast1;
 
-        private int startingAsteroidCount = 500;
-        private int currentAsteroidCount = 500;
+        private int startingAsteroidCount = 100;
+        private int currentAsteroidCount = 100;
         private int asteroidIndex = 500;
 
 
@@ -143,7 +141,7 @@ namespace Project4
             //Creates new list of blasts 
             blastList = new List<Blast>();
 
-            float scale = .25f;
+            float scale = .15f;
 
             basicEffect = new BasicEffect(GraphicsDevice); //or graphicsdevice??
 
@@ -292,24 +290,17 @@ namespace Project4
             world = Matrix.CreateRotationZ(zAngle) * Matrix.CreateRotationY(yAngle);
             #endregion
 
-
-            //cameraForward = world.Forward;
-            //cameraRight = world.Right;
-            //cameraUp = world.Up;
-
+            #region Ship-Asteroid Collision
             //Detects if ship is hit by asteroid 
-
             foreach (var a in asteroids)
             {
                 Matrix asteroidLocation = Matrix.CreateTranslation(a.position);
                 if (IsCollision(ship, shipWorldMatrix, a.type.model, asteroidLocation))
                 {
-                    Console.WriteLine("Ship Hit! by Asteroid " + a.ToString());
+                    //Console.WriteLine("Ship Hit! by Asteroid " + a.ToString());
                     hit = false;
                 }
             }
-
-            //for any blasts, eventually
 
             //Ship will turn red if hit by asteroid: testing purposes
             if (!hit)
@@ -318,8 +309,12 @@ namespace Project4
                 shipTexture = tempTexture;
 
             hit = true;
+            #endregion
 
+            //for any blasts, eventually
+            incrementBlast(movementSpeed);
 
+            Console.WriteLine(shipOrientation.X + ", " + shipOrientation.Y + ", " + shipOrientation.Z);
             base.Update(gameTime);
         }
 
@@ -348,7 +343,13 @@ namespace Project4
 
         private void incrementBlast(float updateSpeed)
         {
-            blast1.position += blast1.velocity * updateSpeed;
+            for(int i = 0; i < blastList.Count; ++i)
+            {
+                Blast temp = blastList[i];
+                temp.position += blastList[i].velocity * updateSpeed;
+
+                blastList[i] = temp; 
+            }
         }
 
         private void shoot()
@@ -358,7 +359,7 @@ namespace Project4
             blast1.position = Vector3.Zero;
             blast1.texture = blastTexture;
             blast1.size = 1;
-            blast1.velocity = world.Up;
+            blast1.velocity = new Vector3(-5f, 0f, 5f);
 
             blastList.Add(blast1);
         }
@@ -370,7 +371,7 @@ namespace Project4
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-           // Matrix billboard = Matrix.CreateBillboard(shipOrientation, )
+            // Matrix billboard = Matrix.CreateBillboard(shipOrientation, )
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
             spriteBatch.Begin();
@@ -417,10 +418,8 @@ namespace Project4
         {
             //mostly Dr. Wittman's Particle code
 
-            Matrix billboard = Matrix.CreateBillboard(blast.position, world.Forward, shipOrientation, null);
+            Matrix billboard = Matrix.CreateBillboard(blast.position, shipLocation, Vector3.Up, null);
             effect.World = Matrix.CreateScale(blast.size) * billboard;
-            //effect.DiffuseColor = blast.color.toVector3();
-            //effect.Alpha = blast.color.A / 255f
             effect.Texture = blast.texture; // or blastTexture
             effect.TextureEnabled = true;
             effect.LightingEnabled = false;
@@ -436,7 +435,6 @@ namespace Project4
                 pass.Apply();
                 effect.GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, 2);
             }
-
         }
 
         private void DrawModel(Model model, Matrix world, Matrix view, Matrix projection, Texture2D texture)
@@ -501,8 +499,6 @@ namespace Project4
             //take current asteroid and halve its size. figure out scaling matrix
 
             //duplicate that asteroid
-
-            //put new asteroid into asteroids[asteroidIndex]
             //then increment asteroidIndex
             //increment currentAsteroidCount
         }
