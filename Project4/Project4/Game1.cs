@@ -144,7 +144,7 @@ namespace Project4
             }
 
                 asteroids.Add(asteroid);
-            }
+            
 
             //Creates new list of blasts 
             blastList = new List<Blast>();
@@ -407,14 +407,14 @@ namespace Project4
             spriteBatch.Draw(backdrop, new Rectangle(0, 0, 800, 480), Color.White);
 			
 			//Draws the scoreboard and what player wins, when the max points is met
-
+            /*
             spriteBatch.DrawString(Font, "Number of lives: " + lives, new Vector2(50, 50), Color.Blue);
 
             spriteBatch.DrawString(Font, "Points: " + score, new Vector2(650, 50), Color.Blue);
 
             spriteBatch.DrawString(Font, "Level: " + level, new Vector2(650, 50), Color.Blue);
             spriteBatch.DrawString(Font, "Remaining Asteroids: " + currentAsteroidCount, new Vector2(650, 50), Color.Blue);
-			
+			*/
             spriteBatch.End();
 
             //Implements a z-buffer
