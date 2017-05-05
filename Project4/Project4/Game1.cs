@@ -39,11 +39,10 @@ namespace Project4
         private List<Blast> blastList;
 
         private Blast blast1;
+        private float blastScale;
 
-        private int startingAsteroidCount = 500;
-        private int currentAsteroidCount = 500;
-        private int asteroidIndex = 500;
-
+        private int startingAsteroidCount = 300;
+        private int currentAsteroidCount = 300;
 
         //USED FOR TESTING COLLISON DETECTION 
         private Texture2D hitShipTexture;
@@ -71,8 +70,8 @@ namespace Project4
         //private Vector3 cameraForward = -Vector3.UnitX;
 
         private Matrix world = Matrix.CreateTranslation(new Vector3(0, 0, 0));
-        private Matrix view = Matrix.CreateLookAt(new Vector3(0, 0, 150), new Vector3(0, 0, 0), Vector3.UnitY);
-        private Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(70), 800f / 480f, 0.01f, 1000f);
+        private Matrix view = Matrix.CreateLookAt(new Vector3(0, 0, 150), new Vector3(0, 0, 0), Vector3.UnitY); //standard
+        private Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), 800f / 480f, 0.01f, 1000f);
 
         #endregion
         struct Asteroid
@@ -80,9 +79,9 @@ namespace Project4
             public AsteroidType type;
             public Vector3 position;
             public Vector3 velocity;
-            public int scale;
-            public float size;
-            public bool current;
+            public int scale; //pick one
+            public float size; //pick one
+            //public bool current;
         }
 
         struct AsteroidType
@@ -91,13 +90,15 @@ namespace Project4
             public Texture2D texture;
         }
 
-        struct Blast
+        class Blast
         {
             public Vector3 position; // should start at zero
             public Vector3 velocity; // should be consistent
             public float size;
-            public Texture2D texture;
-            //color? time to live (ends at asteroid, so may not be needed?)
+            public Texture2D texture; //all have the same. unnecessary.
+            public float timeToLive; //what data type?
+
+            //color? time to live (ends at asteroid, so may not be needed?) 
             //public static VertexBuffer vertexBuffer;
         }
 
@@ -115,10 +116,7 @@ namespace Project4
         /// </summary>
         protected override void Initialize()
         {
-
-            //GraphicsDevice.g
-
-            //is it ok to load models in initialize?
+            //revise to just textures (!!)
             asteroidTypes = new AsteroidType[3];
             asteroidTypes[0].model = Content.Load<Model>("Models/rock1");
             asteroidTypes[1].model = Content.Load<Model>("Models/rock2");
@@ -126,30 +124,25 @@ namespace Project4
             asteroidTypes[0].texture = (Texture2D)Content.Load<Texture>("Textures/rock1");
             asteroidTypes[1].texture = (Texture2D)Content.Load<Texture>("Textures/rock2");
             asteroidTypes[2].texture = (Texture2D)Content.Load<Texture>("Textures/rock3");
-
-            //asteroids = new Asteroid[4 * startingAsteroidCount]; //space for max possible number of asteroids
-
+            
             asteroids = new List<Asteroid>();
 
-            //for loop:
             for(int i = 0; i < startingAsteroidCount; ++i) //generating all initial asteroids
             {
                 asteroid = new Asteroid();
                 asteroid.type = asteroidTypes[random(0, 2)]; // pick random type
                 asteroid.position = choosePosition();
                 asteroid.velocity = chooseVelocity();
-               asteroid.scale = 8; //maybe make weighted avg method if we want to vary this
+                asteroid.scale = 8; //maybe make weighted avg method if we want to vary this
                 asteroid.size = 8; // one of these is definitely redundant.
                 asteroids.Add(asteroid);
             }
 
-                asteroids.Add(asteroid);
+            //asteroids.Add(asteroid); //why is there a second one of this??
             
-
             //Creates new list of blasts 
             blastList = new List<Blast>();
-
-            float scale = .15f;
+            blastScale = .15f;
 
             basicEffect = new BasicEffect(GraphicsDevice); //or graphicsdevice??
 
@@ -160,13 +153,13 @@ namespace Project4
             Vector2 upperRight = new Vector2(1, 0);
             Vector2 lowerRight = new Vector2(1, 1);
 
-            vertices[0] = new VertexPositionColorTexture(scale*new Vector3(1, 1, 0), Color.White, upperRight);
-            vertices[1] = new VertexPositionColorTexture(scale*new Vector3(1, -1, 0), Color.White, lowerRight);
-            vertices[2] = new VertexPositionColorTexture(scale*new Vector3(-1, -1, 0), Color.White, lowerLeft);
+            vertices[0] = new VertexPositionColorTexture(new Vector3(1, 1, 0), Color.White, upperRight);
+            vertices[1] = new VertexPositionColorTexture(new Vector3(1, -1, 0), Color.White, lowerRight);
+            vertices[2] = new VertexPositionColorTexture(new Vector3(-1, -1, 0), Color.White, lowerLeft);
 
-            vertices[3] = new VertexPositionColorTexture(scale*new Vector3(1, 1, 0), Color.White, upperRight);
-            vertices[4] = new VertexPositionColorTexture(scale*new Vector3(-1, -1, 0), Color.White, lowerLeft);
-            vertices[5] = new VertexPositionColorTexture(scale*new Vector3(-1, 1, 0), Color.White, upperLeft);
+            vertices[3] = new VertexPositionColorTexture(new Vector3(1, 1, 0), Color.White, upperRight);
+            vertices[4] = new VertexPositionColorTexture(new Vector3(-1, -1, 0), Color.White, lowerLeft);
+            vertices[5] = new VertexPositionColorTexture(new Vector3(-1, 1, 0), Color.White, upperLeft);
 
             //vertices *= Matrix.CreateScale(.25f);
 
@@ -176,14 +169,12 @@ namespace Project4
 			//gameplay:
 
             lives = 3;
-
             score = 0;
-
             level = 1;
 
-            //remember to put in updates to these later
+            //remember to put in updates to these variables (lives, score) later
 
-            //and create a nextLevel method.
+            //and create a nextLevel method. so that you can increase levels indefinitely based on some math
 			
             base.Initialize();
         }
@@ -239,14 +230,12 @@ namespace Project4
 
             blastTexture = Content.Load<Texture2D>("Textures/blast");
             
-
-            zAngle = 1;
-            yAngle = 0;
+            //zAngle = 1;
+            //yAngle = 0;
 			
 			//FONT
 
             //Font = Content.Load<SpriteFont>("font");
-
             //winFont = Content.Load<SpriteFont>("Win Font");
         }
 
@@ -273,7 +262,7 @@ namespace Project4
             // TODO: Add your update logic here
             Matrix shipWorldMatrix = Matrix.CreateTranslation(shipLocation);
 
-            float movementSpeed = gameTime.ElapsedGameTime.Milliseconds / 1000f * .75f;
+            float movementSpeed = gameTime.ElapsedGameTime.Milliseconds / 1000f * .25f; //.75f to try and slow movements
 
             incrementAsteroids(movementSpeed);
 
@@ -376,21 +365,28 @@ namespace Project4
         {
             for(int i = 0; i < blastList.Count; ++i)
             {
-                Blast temp = blastList[i];
-                temp.position += blastList[i].velocity * updateSpeed;
+                blastList[i].position += blastList[i].velocity * updateSpeed;
 
-                blastList[i] = temp; 
+                if (blastList[i].position.X > positionRange || blastList[i].position.X < -positionRange)
+                    blastList.Remove(blastList[i]);
+
+                else if (blastList[i].position.Y > positionRange || blastList[i].position.Y < -positionRange)
+                    blastList.Remove(blastList[i]);
+
+                else if (blastList[i].position.Z > positionRange || blastList[i].position.Z < -positionRange)
+                    blastList.Remove(blastList[i]);
             }
         }
 
-        private void shoot()
+        private void shoot() 
         {
             //creates new Blast at location of ship, figures out direction/velocity for it
             blast1 = new Blast();
             blast1.position = Vector3.Zero;
             blast1.texture = blastTexture;
-            blast1.size = 50;
-            blast1.velocity = world.Up;
+            blast1.size = 10f;
+            blast1.velocity = world.Up*500f;
+            blast1.position += blast1.velocity * .05f;
 
             blastList.Add(blast1);
         }
@@ -405,17 +401,18 @@ namespace Project4
             // Matrix billboard = Matrix.CreateBillboard(shipOrientation, )
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            spriteBatch.Begin();
+            spriteBatch.Begin(SpriteSortMode.Deferred, null, null, DepthStencilState.None);
             spriteBatch.Draw(backdrop, new Rectangle(0, 0, 800, 480), Color.White);
 			
 			//Draws the scoreboard and what player wins, when the max points is met
+            //Should be last thing drawn 
             /*
             spriteBatch.DrawString(Font, "Number of lives: " + lives, new Vector2(50, 50), Color.Blue);
 
             spriteBatch.DrawString(Font, "Points: " + score, new Vector2(650, 50), Color.Blue);
 
-            spriteBatch.DrawString(Font, "Level: " + level, new Vector2(650, 50), Color.Blue);
-            spriteBatch.DrawString(Font, "Remaining Asteroids: " + currentAsteroidCount, new Vector2(650, 50), Color.Blue);
+            spriteBatch.DrawString(Font, "Level: " + level, new Vector2(50, 650), Color.Blue);
+            spriteBatch.DrawString(Font, "Remaining Asteroids: " + currentAsteroidCount, new Vector2(650, 650), Color.Blue);
 			*/
             spriteBatch.End();
 
@@ -424,7 +421,7 @@ namespace Project4
 
 
             //Draw the ship at the origin 
-            DrawModel(ship, Matrix.CreateRotationX(MathHelper.ToRadians(90)) * Matrix.CreateRotationZ(MathHelper.ToRadians(-90)) * world, view, projection, shipTexture);
+            DrawModel(ship, Matrix.CreateRotationX(MathHelper.ToRadians(90)) * Matrix.CreateRotationZ(MathHelper.ToRadians(-90)) * world, shipTexture);
 
             //Draw the array of asteroids 
             foreach (var a in asteroids)
@@ -432,7 +429,7 @@ namespace Project4
                     Matrix asteroidLocation = Matrix.CreateTranslation(a.position);
 
                     //Draw current asteroid
-                    //DrawModel(a.type.model, Matrix.CreateTranslation(a.position), view, projection, a.type.texture);
+                    DrawModel(a.type.model, Matrix.CreateTranslation(a.position), a.type.texture);
 
                     //Ensures Asteroids are not drawn on top of each other, 
                     //if current asteroid is drawn withing bounding sphere of previous asteroids, it is redrawn at a new location
@@ -462,28 +459,40 @@ namespace Project4
         private void DrawBlast(Blast blast, BasicEffect effect)
         {
             //mostly Dr. Wittman's Particle code
-            Matrix billboard = Matrix.CreateBillboard(blast.position, new Vector3(0, 0, 150), Vector3.UnitY, -Vector3.UnitZ);
+            Matrix billboard = Matrix.CreateBillboard(blast.position, new Vector3(0, 0, 150), Vector3.UnitY, null);
+            
+           // DrawModel(asteroid.type.model, Matrix.CreateTranslation(blast.position), view, projection, asteroid.type.texture);
+
+
+
+            //GraphicsDevice device = effect.GraphicsDevice;
+            //device.SetVertexBuffer(vertexBuffer);
+            
+            GraphicsDevice.DepthStencilState = DepthStencilState.DepthRead;
+            GraphicsDevice.BlendState = BlendState.Additive;
+            GraphicsDevice.RasterizerState = RasterizerState.CullNone;
+            GraphicsDevice.SetVertexBuffer(vertexBuffer);
+
+
             effect.World = Matrix.CreateScale(blast.size) * billboard;
+            effect.View = view;
+            effect.Projection = projection;
             effect.Texture = blast.texture; // or blastTexture
             effect.TextureEnabled = true;
             effect.LightingEnabled = false;
             effect.PreferPerPixelLighting = false;
 
-            //GraphicsDevice device = effect.GraphicsDevice;
-            //device.SetVertexBuffer(vertexBuffer);
-            GraphicsDevice.SetVertexBuffer(vertexBuffer);
-            GraphicsDevice.DepthStencilState = DepthStencilState.DepthRead;
-            GraphicsDevice.BlendState = BlendState.Additive;
-
-
             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
             {
                 pass.Apply();
-                effect.GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, 2);
+
+
+
+                GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, 2);
             }
         }
 
-        private void DrawModel(Model model, Matrix world, Matrix view, Matrix projection, Texture2D texture)
+        private void DrawModel(Model model, Matrix world, Texture2D texture)
         {
             foreach (ModelMesh mesh in model.Meshes)
             {
@@ -534,7 +543,7 @@ namespace Project4
             }
             else
             {
-                Asteroid copy1 = asteroid;
+                Asteroid copy1 = asteroid; //does this need to be a new asteroid also (????)
                 copy1.size = asteroid.size * .5f;
                 copy1.velocity = chooseVelocity();
                 copy1.type = asteroid.type; // we should get away from type
@@ -546,36 +555,30 @@ namespace Project4
                 copy2.type = asteroid.type; // we want to get away from using type (just texture.)
                 copy2.position = asteroid.position;
 
-                //find explosion vector
+                //find explosion vector:
                 //perp to asteroid velocity and blaster velocity found using the cross product, then normalize it
                 //this may require a seperate angular and non-angular velocity (??)
-
+               
                 copy2.velocity =  Vector3.Normalize(Vector3.Cross(blastVector, copy1.velocity));
 
                 //result.position set to half asteroid's radius away (along explosion vector)
                 // these really should be different and in relation 
-                copy1.position.X += asteroid.size / 2; 
+                // how do we determine the asteroid's radius? (?????)
+                copy1.position.X += asteroid.size / 2; //just on X axis to make something work.
                 copy2.position.X -= asteroid.size / 2;
 
                 asteroids.Add(copy1);
                 asteroids.Add(copy2);
 
-                asteroids.Remove(asteroid);
+                asteroids.Remove(asteroid); // will this successfully remove the asteroid (?????)
 
                 currentAsteroidCount++;
-
             }
            
 
             //else:
             
             //take current asteroid and halve its size. figure out scaling matrix
-
-            //duplicate that asteroid
-
-            //put new asteroid into asteroids[asteroidIndex]
-            //then increment asteroidIndex
-            //increment currentAsteroidCount
         }
 
     }
