@@ -62,6 +62,12 @@ namespace Project4
         private KeyboardState oldState;
         private int positionRange = 675;
 
+        //gameplay variables
+
+        int level;
+        int score;
+        int lives;
+
         //private Vector3 cameraForward = -Vector3.UnitX;
 
         private Matrix world = Matrix.CreateTranslation(new Vector3(0, 0, 0));
@@ -132,8 +138,10 @@ namespace Project4
                 asteroid.type = asteroidTypes[random(0, 2)]; // pick random type
                 asteroid.position = choosePosition();
                 asteroid.velocity = chooseVelocity();
-                asteroid.scale = 3; //maybe make weighted avg method if we want to vary this
-                //asteroid.current = true;
+               asteroid.scale = 8; //maybe make weighted avg method if we want to vary this
+                asteroid.size = 8; // one of these is definitely redundant.
+                asteroids.Add(asteroid);
+            }
 
                 asteroids.Add(asteroid);
             }
@@ -165,6 +173,18 @@ namespace Project4
             vertexBuffer = new VertexBuffer(basicEffect.GraphicsDevice, typeof(VertexPositionColorTexture), vertices.Length, BufferUsage.WriteOnly);
             vertexBuffer.SetData<VertexPositionColorTexture>(vertices);
 
+			//gameplay:
+
+            lives = 3;
+
+            score = 0;
+
+            level = 1;
+
+            //remember to put in updates to these later
+
+            //and create a nextLevel method.
+			
             base.Initialize();
         }
 
@@ -222,6 +242,12 @@ namespace Project4
 
             zAngle = 1;
             yAngle = 0;
+			
+			//FONT
+
+            //Font = Content.Load<SpriteFont>("font");
+
+            //winFont = Content.Load<SpriteFont>("Win Font");
         }
 
         /// <summary>
@@ -338,6 +364,9 @@ namespace Project4
                     temp.position = choosePosition();
 
                 asteroids[i] = temp;
+				
+				if (random(0,100) > 94) // testing breakApart prior to successful blasting.
+                breakApart(asteroids[random(0, currentAsteroidCount)]); // this eventually gives an out of bounds error for unknown reasons
             }
         }
 
@@ -376,6 +405,16 @@ namespace Project4
 
             spriteBatch.Begin();
             spriteBatch.Draw(backdrop, new Rectangle(0, 0, 800, 480), Color.White);
+			
+			//Draws the scoreboard and what player wins, when the max points is met
+
+            spriteBatch.DrawString(Font, "Number of lives: " + lives, new Vector2(50, 50), Color.Blue);
+
+            spriteBatch.DrawString(Font, "Points: " + score, new Vector2(650, 50), Color.Blue);
+
+            spriteBatch.DrawString(Font, "Level: " + level, new Vector2(650, 50), Color.Blue);
+            spriteBatch.DrawString(Font, "Remaining Asteroids: " + currentAsteroidCount, new Vector2(650, 50), Color.Blue);
+			
             spriteBatch.End();
 
             //Implements a z-buffer
@@ -476,21 +515,48 @@ namespace Project4
             return false;
         }
 
-        private void breakApart(Asteroid asteroid)
+        private void breakApart(Asteroid asteroid/*, Blast blast*/)
         {
-            //condition: if the asteroid is smallest
-            //asteroid[i].current = false;
-            //count--
+            //vector
+            Vector3 blastVector = chooseVelocity();
 
-            if (asteroid.scale == 1) //largest is 3, smallest is 1. could be .25
+            if (asteroid.size <= 8) //largest is 3, smallest is 1. could be .25
             {
                 asteroids.Remove(asteroid); //not sure if this will work, or remove other random asteroid.
                 currentAsteroidCount--;
             }
             else
             {
-                Asteroid result = new Asteroid();
-                result.size = asteroid.size / 2;
+                Asteroid copy1 = asteroid;
+                copy1.size = asteroid.size * .5f;
+                copy1.velocity = chooseVelocity();
+                copy1.type = asteroid.type; // we should get away from type
+                copy1.position = asteroid.position;
+
+                Asteroid copy2 = new Asteroid();
+                copy2.size = asteroid.size * .5f;
+                //copy2.velocity = chooseVelocity();
+                copy2.type = asteroid.type; // we want to get away from using type (just texture.)
+                copy2.position = asteroid.position;
+
+                //find explosion vector
+                //perp to asteroid velocity and blaster velocity found using the cross product, then normalize it
+                //this may require a seperate angular and non-angular velocity (??)
+
+                copy2.velocity =  Vector3.Normalize(Vector3.Cross(blastVector, copy1.velocity));
+
+                //result.position set to half asteroid's radius away (along explosion vector)
+                // these really should be different and in relation 
+                copy1.position.X += asteroid.size / 2; 
+                copy2.position.X -= asteroid.size / 2;
+
+                asteroids.Add(copy1);
+                asteroids.Add(copy2);
+
+                asteroids.Remove(asteroid);
+
+                currentAsteroidCount++;
+
             }
            
 
@@ -499,6 +565,8 @@ namespace Project4
             //take current asteroid and halve its size. figure out scaling matrix
 
             //duplicate that asteroid
+
+            //put new asteroid into asteroids[asteroidIndex]
             //then increment asteroidIndex
             //increment currentAsteroidCount
         }
