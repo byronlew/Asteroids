@@ -40,8 +40,8 @@ namespace Project4
 
         private Blast blast1;
 
-        private int startingAsteroidCount = 100;
-        private int currentAsteroidCount = 100;
+        private int startingAsteroidCount = 500;
+        private int currentAsteroidCount = 500;
         private int asteroidIndex = 500;
 
 
@@ -71,7 +71,7 @@ namespace Project4
         //private Vector3 cameraForward = -Vector3.UnitX;
 
         private Matrix world = Matrix.CreateTranslation(new Vector3(0, 0, 0));
-        private Matrix view = Matrix.CreateLookAt(new Vector3(0, 150, 0), new Vector3(0, 0, 0), -Vector3.UnitX);
+        private Matrix view = Matrix.CreateLookAt(new Vector3(0, 0, 150), new Vector3(0, 0, 0), Vector3.UnitY);
         private Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(70), 800f / 480f, 0.01f, 1000f);
 
         #endregion
@@ -273,48 +273,50 @@ namespace Project4
             // TODO: Add your update logic here
             Matrix shipWorldMatrix = Matrix.CreateTranslation(shipLocation);
 
-            float movementSpeed = gameTime.ElapsedGameTime.Milliseconds / 1000f; //* .75f;
+            float movementSpeed = gameTime.ElapsedGameTime.Milliseconds / 1000f * .75f;
 
             incrementAsteroids(movementSpeed);
 
             KeyboardState newState = Keyboard.GetState();  // get the newest state
 
-            //Shoots a blast 
-            if (newState.IsKeyDown(Keys.Space))
-                shoot();
+            
 
             //Ship  Movement
             #region ShipMovement
             //Ship rotation 
             if (newState.IsKeyDown(Keys.Left))
             {
-                yAngle += 0.03f;
-                shipOrientation.Y += 0.03f;
+                //yAngle += 0.03f;
+                shipOrientation.Z += 0.03f;
             }
                 
            
             else if (newState.IsKeyDown(Keys.Right))
             {
-                yAngle -= 0.03f;
-                shipOrientation.Y -= 0.03f;
+                //yAngle -= 0.03f;
+                shipOrientation.Z -= 0.03f;
             }
 
 
             //Flipping the ship in 3D space
             if (newState.IsKeyDown(Keys.Down))
             {
-                zAngle += 0.03f;
-                shipOrientation.Z += 0.03f;
+                //zAngle += 0.03f;
+                shipOrientation.X += 0.03f;
             }
 
             else if (newState.IsKeyDown(Keys.Up))
             {
-                zAngle -= 0.03f;
-                shipOrientation.Z -= 0.03f;
+                //zAngle -= 0.03f;
+                shipOrientation.X -= 0.03f;
             }
 
-            world = Matrix.CreateRotationZ(zAngle) * Matrix.CreateRotationY(yAngle);
+            world = Matrix.CreateRotationX(shipOrientation.X) * Matrix.CreateRotationZ(shipOrientation.Z);
             #endregion
+
+            //Shoots a blast 
+            if (newState.IsKeyDown(Keys.Space))
+                shoot();
 
             #region Ship-Asteroid Collision
             //Detects if ship is hit by asteroid 
@@ -340,7 +342,7 @@ namespace Project4
             //for any blasts, eventually
             incrementBlast(movementSpeed);
 
-            Console.WriteLine(shipOrientation.X + ", " + shipOrientation.Y + ", " + shipOrientation.Z);
+            //Console.WriteLine(shipOrientation.X + ", " + shipOrientation.Y + ", " + shipOrientation.Z);
             base.Update(gameTime);
         }
 
@@ -365,8 +367,8 @@ namespace Project4
 
                 asteroids[i] = temp;
 				
-				if (random(0,100) > 94) // testing breakApart prior to successful blasting.
-                breakApart(asteroids[random(0, currentAsteroidCount)]); // this eventually gives an out of bounds error for unknown reasons
+				//if (random(0,100) > 94) // testing breakApart prior to successful blasting.
+                //breakApart(asteroids[random(0, currentAsteroidCount)]); // this eventually gives an out of bounds error for unknown reasons
             }
         }
 
@@ -387,8 +389,8 @@ namespace Project4
             blast1 = new Blast();
             blast1.position = Vector3.Zero;
             blast1.texture = blastTexture;
-            blast1.size = 1;
-            blast1.velocity = new Vector3(-5f, 0f, 5f);
+            blast1.size = 50;
+            blast1.velocity = world.Up;
 
             blastList.Add(blast1);
         }
@@ -420,8 +422,9 @@ namespace Project4
             //Implements a z-buffer
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
-            //Draw the ship at the origin
-            DrawModel(ship, world, view, projection, shipTexture);
+
+            //Draw the ship at the origin 
+            DrawModel(ship, Matrix.CreateRotationX(MathHelper.ToRadians(90)) * Matrix.CreateRotationZ(MathHelper.ToRadians(-90)) * world, view, projection, shipTexture);
 
             //Draw the array of asteroids 
             foreach (var a in asteroids)
@@ -429,7 +432,7 @@ namespace Project4
                     Matrix asteroidLocation = Matrix.CreateTranslation(a.position);
 
                     //Draw current asteroid
-                    DrawModel(a.type.model, Matrix.CreateTranslation(a.position), view, projection, a.type.texture);
+                    //DrawModel(a.type.model, Matrix.CreateTranslation(a.position), view, projection, a.type.texture);
 
                     //Ensures Asteroids are not drawn on top of each other, 
                     //if current asteroid is drawn withing bounding sphere of previous asteroids, it is redrawn at a new location
@@ -447,17 +450,19 @@ namespace Project4
             }
 
             foreach(var blast in blastList){
-                DrawBlast(blast, basicEffect, world.Right, world.Up, world.Forward);
+                //Console.WriteLine("blast drawn!");
+                DrawBlast(blast, basicEffect);
             }
-           
+              
+            GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+            GraphicsDevice.BlendState = BlendState.Opaque;
             base.Draw(gameTime);
         }
 
-        private void DrawBlast(Blast blast, BasicEffect effect, Vector3 camera, Vector3 cameraUp, Vector3 cameraForward)
+        private void DrawBlast(Blast blast, BasicEffect effect)
         {
             //mostly Dr. Wittman's Particle code
-
-            Matrix billboard = Matrix.CreateBillboard(blast.position, shipLocation, Vector3.Up, null);
+            Matrix billboard = Matrix.CreateBillboard(blast.position, new Vector3(0, 0, 150), Vector3.UnitY, -Vector3.UnitZ);
             effect.World = Matrix.CreateScale(blast.size) * billboard;
             effect.Texture = blast.texture; // or blastTexture
             effect.TextureEnabled = true;
@@ -467,6 +472,8 @@ namespace Project4
             //GraphicsDevice device = effect.GraphicsDevice;
             //device.SetVertexBuffer(vertexBuffer);
             GraphicsDevice.SetVertexBuffer(vertexBuffer);
+            GraphicsDevice.DepthStencilState = DepthStencilState.DepthRead;
+            GraphicsDevice.BlendState = BlendState.Additive;
 
 
             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
