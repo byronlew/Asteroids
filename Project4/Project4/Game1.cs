@@ -12,7 +12,7 @@ namespace Project4
     /// Byron Lewandowski and Lucas Garges
     /// Project 4 - Asteroids
     /// Dr. Wittman - Computer Graphics
-    /// 5/5/2017
+    /// 5/6/2017
     /// </summary>
     /// 
 
@@ -43,8 +43,8 @@ namespace Project4
         private Blast thruster; 
         public static VertexBuffer vertexBuffer;
 
-        private int startingAsteroidCount = 200;
-        private int currentAsteroidCount = 200;
+        private int startingAsteroidCount = 150;
+        private int currentAsteroidCount = 150;
         private Matrix asteroidLocation;
 
         //USED FOR TESTING COLLISON DETECTION 
@@ -62,7 +62,7 @@ namespace Project4
         
         private KeyboardState newState;
         private bool isSpacePressed;
-        private bool isCurrentCollision;
+        private bool isLeftCtrlPressed;
 
         private int velocityRange = 30;
 
@@ -80,7 +80,6 @@ namespace Project4
         private SoundEffect winEffect;
         private SoundEffect newLevel; //found- nextLevel
         private SoundEffect laser; //for blasts
-        private SoundEffect loseGame;
         private SoundEffect breakEffect; // for asteroids
         private SoundEffect minorShipHit;
         private SoundEffect majorShipHit; 
@@ -92,6 +91,7 @@ namespace Project4
         private Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), 800f / 480f, 0.01f, 1000f);
 
         #endregion
+
         class Asteroid
         {
             //public AsteroidType type;
@@ -103,7 +103,8 @@ namespace Project4
         class Blast
         {
             public Vector3 position; // should start at zero
-            public Vector3 velocity; // should be consistent
+            public Vector3 velocity;
+            public Texture2D texture;
             public float scale;
         }
 
@@ -131,7 +132,7 @@ namespace Project4
                 asteroid = new Asteroid();
                 asteroid.position = Vector3.Zero;
                 while(Math.Abs(asteroid.position.X) < 75 || Math.Abs(asteroid.position.Y) < 75 || Math.Abs(asteroid.position.Z) < 75)
-                    asteroid.position = choosePosition(-675, 675);
+                    asteroid.position = choosePosition(-positionRange, positionRange);
 
                 asteroid.velocity = chooseVelocity();
                 asteroid.scale = 2;
@@ -149,7 +150,6 @@ namespace Project4
             basicEffect = new BasicEffect(GraphicsDevice);
 
             //sets up vertexBuffer for a square that is later used for blasts
-
             VertexPositionColorTexture[] vertices = new VertexPositionColorTexture[6];
 
             Vector2 upperLeft = new Vector2(0, 0);
@@ -176,12 +176,11 @@ namespace Project4
             gameover = false;
             
             isSpacePressed = false;
-            isCurrentCollision = false;
 
             base.Initialize();
         }
 
-        #region Asteroid Stuff
+        #region Choosing Velocity, Position, and Random Vectors
         // pick a random velocity for an asteroid
         private Vector3 chooseVelocity()
         {
@@ -190,12 +189,8 @@ namespace Project4
 
         private Vector3 choosePosition(int lower, int upper) //!!!
         {
-            Vector3 p = Vector3.Zero; //initial value
-            //while (IsCollision(ship, shipWorldMatrix, asteroids[i].type.model, asteroidLocation))
-            {
-                 p = new Vector3(random(lower, upper), random(lower, upper), random(lower, upper));
-            }
-            return p;
+           return new Vector3(random(lower, upper), random(lower, upper), random(lower, upper));
+
         }
 
         
@@ -224,7 +219,7 @@ namespace Project4
             backdrop = Content.Load<Texture2D>("Textures/galaxy");
             tempTexture = shipTexture;
             blastTexture = Content.Load<Texture2D>("Textures/blast");
-            thrusterTexture = Content.Load<Texture2D>("Textures/thruster");
+            thrusterTexture = Content.Load<Texture2D>("Textures/thruster2");
 
             //FONT
             font = (SpriteFont)Content.Load<SpriteFont>("font");
@@ -276,43 +271,47 @@ namespace Project4
             {
                 if (newState.IsKeyDown(Keys.Left))
                 {
-                    //yAngle += 0.03f;
                     shipOrientation.Z += 0.03f;
                 }
 
                 else if (newState.IsKeyDown(Keys.Right))
                 {
-                    //yAngle -= 0.03f;
                     shipOrientation.Z -= 0.03f;
                 }
 
                 //Flipping the ship in 3D space
                 if (newState.IsKeyDown(Keys.Up))
                 {
-                    //zAngle += 0.03f;
                     shipOrientation.X += 0.03f;
                 }
 
                 else if (newState.IsKeyDown(Keys.Down))
                 {
-                    //zAngle -= 0.03f;
                     shipOrientation.X -= 0.03f;
                 }
 
                 world = Matrix.CreateRotationX(shipOrientation.X) * Matrix.CreateRotationZ(shipOrientation.Z);
                 #endregion
 
-            #region Ship Velocity and Shooting 
+                #region Ship Velocity and Shooting 
                 //left control, forward movement
                 if (newState.IsKeyDown(Keys.LeftControl))
                 {
+                    if (!isLeftCtrlPressed)
+                    {
+                        thruster.scale = 9f;
+                        thruster.texture = thrusterTexture;
+                        blastList.Add(thruster);
+                    }
+                    isLeftCtrlPressed = true;
+
                     shipVelocity -= world.Up;
 
-                    thruster.scale = 10f;
-                    blastList.Add(thruster);
-
                 }
-                thruster.position = world.Up * 500f * -.05f;
+                else
+                    isLeftCtrlPressed = false;
+
+                thruster.position = world.Up * 400f * -.05f;
                 
                 if (shipVelocity.X > 30f) shipVelocity.X = 30f;
                 if (shipVelocity.Y > 30f) shipVelocity.Y = 30f;
@@ -322,7 +321,8 @@ namespace Project4
                 if (newState.IsKeyDown(Keys.RightControl))
                 {
                     shipVelocity = Vector3.Zero;
-                    blastList.Remove(thruster);
+                    while (blastList.Contains(thruster))
+                        blastList.Remove(thruster);
                 }
 
                 //Shoots a blast 
@@ -350,7 +350,6 @@ namespace Project4
                     {
                         resetAsteroids();
                         hit = true;
-                        isCurrentCollision = true;
                     }
 
                     //blast-asteroid collison here
@@ -369,7 +368,7 @@ namespace Project4
                 if (hit)
                 {
                     shipTexture = hitShipTexture;
-                    lives--;
+                    //lives--;
                     minorShipHit.Play();
                 }
                 else
@@ -392,6 +391,8 @@ namespace Project4
             {
                 gameover = true;
                 lose = true;
+                while (blastList.Contains(thruster))
+                    blastList.Remove(thruster);
                 majorShipHit.Play();
             }
 
@@ -402,11 +403,14 @@ namespace Project4
                 nextLevelScore += level * level * 100; 
                 Console.WriteLine("level: " + level + "/tscore: " + score);
                 //play sound
+                addAsteroids(30);
             }
 
             if (level >= 5 && win == false)
             {
                 gameover = true;
+                while (blastList.Contains(thruster))
+                    blastList.Remove(thruster);
                 winEffect.Play();
                 win = true; 
             }
@@ -414,26 +418,40 @@ namespace Project4
 
             base.Update(gameTime);
         }
-       
+
+        #region Asteroid Updates
         //Increment the asteroids 
         private void incrementAsteroids(float updateSpeed)
         {
             for (int i = 0; i < asteroids.Count; ++i)
-            {
-                Asteroid temp = asteroids[i]; // needed because I can't access things in list directly like in array
+            {  
 
-                temp.position += asteroids[i].velocity * updateSpeed + shipVelocity;
+                asteroids[i].position += asteroids[i].velocity * updateSpeed + shipVelocity;
                 
                 if (asteroids[i].position.X > positionRange || asteroids[i].position.X < -positionRange)
-                    temp.position = choosePosition(-675, 750);
+                    asteroids[i].position = choosePosition(-positionRange, positionRange);
 
                 else if (asteroids[i].position.Y > positionRange || asteroids[i].position.Y < -positionRange)
-                    temp.position = choosePosition(-675, 750);
+                    asteroids[i].position = choosePosition(-positionRange, positionRange);
 
                 else if (asteroids[i].position.Z > positionRange || asteroids[i].position.Z < -positionRange)
-                    temp.position = choosePosition(-675, 750);
+                    asteroids[i].position = choosePosition(-positionRange, positionRange);
+            }
+        }
 
-                asteroids[i] = temp;
+        private void addAsteroids(int count)
+        {
+            for (int i = 0; i < count; ++i) //generating all initial asteroids
+            {
+                asteroid = new Asteroid();
+                asteroid.position = Vector3.Zero;
+                while (Math.Abs(asteroid.position.X) < 75 || Math.Abs(asteroid.position.Y) < 75 || Math.Abs(asteroid.position.Z) < 75)
+                    asteroid.position = choosePosition(-positionRange, positionRange);
+
+                asteroid.velocity = 10*chooseVelocity();
+
+                asteroid.scale = 2;
+                asteroids.Add(asteroid);
             }
         }
 
@@ -442,9 +460,10 @@ namespace Project4
             for (int i = 0; i < asteroids.Count; ++i)
             {
                 while (Math.Abs(asteroids[i].position.X) < 75 || Math.Abs(asteroids[i].position.Y) < 75 || Math.Abs(asteroids[i].position.Z) < 75)
-                    asteroids[i].position = choosePosition(-675, 675);
+                    asteroids[i].position = choosePosition(-positionRange, positionRange);
             }
         }
+        #endregion
 
         //Increments the position of the blast according to its velocity, and removes it if out of bounds
         private void incrementBlast(float updateSpeed)
@@ -468,11 +487,10 @@ namespace Project4
         private void shoot() 
         {
             blast = new Blast();
-            //blast1.position = Vector3.Zero;
             blast.scale = 10f;
             blast.velocity = world.Up*500f;
             blast.position = blast.velocity * .05f;
-
+            blast.texture = blastTexture;
             blastList.Add(blast);
 
             laser.Play(.5f,.7f,1f);
@@ -557,7 +575,7 @@ namespace Project4
             effect.World = Matrix.CreateScale(blast.scale) * billboard;
             effect.View = view;
             effect.Projection = projection;
-            effect.Texture = blastTexture;
+            effect.Texture = blast.texture;
             effect.TextureEnabled = true;
             effect.LightingEnabled = false;
             effect.PreferPerPixelLighting = false;
