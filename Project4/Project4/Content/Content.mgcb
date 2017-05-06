@@ -216,3 +216,33 @@
 /processorParam:TextureFormat=Compressed
 /build:font.spritefont
 
+#begin Audio/snare.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/snare.wav
+
+#begin Audio/majorCrash.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/majorCrash.wav
+
+#begin Audio/winSound.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/winSound.wav
+
+#begin Audio/nextLevel.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/nextLevel.wav
+
+#begin Audio/laserSound.WAV
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/laserSound.WAV
+

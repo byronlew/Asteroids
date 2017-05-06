@@ -3,11 +3,16 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
+using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Media;
 
 namespace Project4
 {
     /// <summary>
-    /// This is the main type for your game.
+    /// Byron Lewandowski and Lucas Garges
+    /// Project 4 - Asteroids
+    /// Dr. Wittman - Computer Graphics
+    /// 5/5/2017
     /// </summary>
     /// 
 
@@ -17,9 +22,6 @@ namespace Project4
 
         //Private variables to be used
         #region Private variables
-
-        //for blast
-        public static VertexBuffer vertexBuffer;
 
         GraphicsDeviceManager graphics;
         BasicEffect basicEffect;
@@ -38,6 +40,7 @@ namespace Project4
 
         private List<Blast> blastList;
         private Blast blast;
+        public static VertexBuffer vertexBuffer;
 
         private int startingAsteroidCount = 200;
         private int currentAsteroidCount = 200;
@@ -68,9 +71,17 @@ namespace Project4
         int lives;
         int nextLevelScore;
         bool gameover;
+        
+        private SoundEffect winEffect;
+        private SoundEffect newLevel; //found- nextLevel
+        private SoundEffect laser; //for blasts
+        private SoundEffect loseGame;
+        private SoundEffect breakEffect; // for asteroids
+        private SoundEffect minorShipHit;
+        private SoundEffect majorShipHit; 
 
-        //private Vector3 cameraForward = -Vector3.UnitX;
-
+        private Song song;
+        
         private Matrix world = Matrix.CreateTranslation(new Vector3(0, 0, 0));
         private Matrix view = Matrix.CreateLookAt(new Vector3(0, 0, 150), new Vector3(0, 0, 0), Vector3.UnitY); //standard
         private Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), 800f / 480f, 0.01f, 1000f);
@@ -200,6 +211,14 @@ namespace Project4
 
             //FONT
             font = (SpriteFont)Content.Load<SpriteFont>("font");
+
+            //AUDIO
+            winEffect = Content.Load<SoundEffect>("Audio/winSound");
+            newLevel = Content.Load<SoundEffect>("Audio/nextLevel");
+            laser = Content.Load<SoundEffect>("Audio/laserSound");
+            breakEffect = Content.Load<SoundEffect>("Audio/majorCrash"); //currently duplicate **
+            minorShipHit = Content.Load<SoundEffect>("Audio/snare");
+            majorShipHit = Content.Load<SoundEffect>("Audio/majorCrash");
         }
 
         /// <summary>
@@ -317,7 +336,7 @@ namespace Project4
                 {
                     shipTexture = hitShipTexture;
                     lives--;
-                    //metallic sound
+                    minorShipHit.Play();
                 }
                 else
                     shipTexture = tempTexture;
@@ -344,14 +363,18 @@ namespace Project4
             {
                 level++;
                 lives++;
-                nextLevelScore += level * level * 100;
+                nextLevelScore += 20; //+= level * level * 100; 
                 Console.WriteLine("level: " + level + "/tscore: " + score);
                 //play sound
             }
             if (level == 5)
             {
                 gameover = true;
-                //win sound
+                winEffect.Play();
+                spriteBatch.Begin();
+                spriteBatch.DrawString(font, "You won!", new Vector2(200, 200), Color.Yellow);
+                //does not print :(
+                spriteBatch.End();
             } 
 
             base.Update(gameTime);
@@ -407,7 +430,7 @@ namespace Project4
 
             blastList.Add(blast);
 
-            //blast sound
+            laser.Play(.5f,.7f,1f);
         }
 
 
@@ -554,8 +577,7 @@ namespace Project4
         private void breakApart(Asteroid asteroid, Blast blast)
         {
             //crash sound
-
-            //explosion at asteroid location !!!
+            breakEffect.Play(.5f,.5f,1f);
 
             Vector3 explosionVector;
 
