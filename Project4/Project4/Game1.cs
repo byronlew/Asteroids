@@ -60,6 +60,7 @@ namespace Project4
         
         private KeyboardState newState;
         private bool isSpacePressed;
+        private bool isCurrentCollision;
 
         private int velocityRange = 30;
 
@@ -126,7 +127,10 @@ namespace Project4
             for(int i = 0; i < startingAsteroidCount; ++i) //generating all initial asteroids
             {
                 asteroid = new Asteroid();
-                asteroid.position = choosePosition(-675, 675);
+                asteroid.position = Vector3.Zero;
+                while(Math.Abs(asteroid.position.X) < 75 || Math.Abs(asteroid.position.Y) < 75 || Math.Abs(asteroid.position.Z) < 75)
+                    asteroid.position = choosePosition(-675, 675);
+
                 asteroid.velocity = chooseVelocity();
                 asteroid.scale = 2;
                 asteroids.Add(asteroid);
@@ -158,13 +162,14 @@ namespace Project4
             vertexBuffer.SetData<VertexPositionColorTexture>(vertices);
 
 			//gameplay variables
-            lives = 3;
+            lives = 5;
             score = 0;
             level = 1;
             nextLevelScore = 200;
             gameover = false;
             
             isSpacePressed = false;
+            isCurrentCollision = false;
 
             base.Initialize();
         }
@@ -287,9 +292,14 @@ namespace Project4
                 //left control, forward movement
                 if (newState.IsKeyDown(Keys.LeftControl))
                 {
-                    shipVelocity -= world.Up;
+                    shipVelocity -= world.Up;                 
                 }
-                //right control, forward movement
+
+                if (shipVelocity.X > 30f) shipVelocity.X = 30f;
+                if (shipVelocity.Y > 30f) shipVelocity.Y = 30f;
+                if (shipVelocity.Z > 30f) shipVelocity.Z = 30f;
+
+                //right control, STOP movement
                 if (newState.IsKeyDown(Keys.RightControl))
                 {
                     shipVelocity = Vector3.Zero;
@@ -318,9 +328,11 @@ namespace Project4
                     asteroidLocation = Matrix.CreateTranslation(asteroids[i].position);
                     if (IsCollision(shipModel, shipWorldMatrix, asteroidModel, asteroidLocation))
                     {
-                        //Console.WriteLine("Ship Hit! by Asteroid " + a.ToString());
-                        hit = false;
+                        resetAsteroids();
+                        hit = true;
+                        isCurrentCollision = true;
                     }
+
                     //blast-asteroid collison here
                     foreach (var blast in blastList)
                     {
@@ -334,7 +346,7 @@ namespace Project4
                 }
 
                 //Ship will turn red if hit by asteroid: testing purposes
-                if (!hit)
+                if (hit)
                 {
                     shipTexture = hitShipTexture;
                     lives--;
@@ -343,7 +355,7 @@ namespace Project4
                 else
                     shipTexture = tempTexture;
 
-                hit = true;
+                hit = false;
             }
             else
             {
@@ -353,7 +365,8 @@ namespace Project4
 
             //Increment Blast
             incrementBlast(movementSpeed);
-            
+
+            #region Scoring and Game Ending 
             //Check if the player has any remaining lives, and checks if the level
             if (lives <= 0)
             {
@@ -377,11 +390,13 @@ namespace Project4
                 gameover = true;
                 winEffect.Play();
                 win = true; 
-            } 
+            }
+            #endregion
 
             base.Update(gameTime);
         }
        
+        //Increment the asteroids 
         private void incrementAsteroids(float updateSpeed)
         {
             for (int i = 0; i < asteroids.Count; ++i)
@@ -391,15 +406,25 @@ namespace Project4
                 temp.position += asteroids[i].velocity * updateSpeed + shipVelocity;
                 
                 if (asteroids[i].position.X > positionRange || asteroids[i].position.X < -positionRange)
-                    temp.position = choosePosition(675, 750);
+                    temp.position = choosePosition(-675, 750);
 
                 else if (asteroids[i].position.Y > positionRange || asteroids[i].position.Y < -positionRange)
-                    temp.position = choosePosition(675, 750);
+                    temp.position = choosePosition(-675, 750);
 
                 else if (asteroids[i].position.Z > positionRange || asteroids[i].position.Z < -positionRange)
-                    temp.position = choosePosition(675, 750);
+                    temp.position = choosePosition(-675, 750);
 
                 asteroids[i] = temp;
+            }
+        }
+
+        private void resetAsteroids()
+        {
+            for (int i = 0; i < asteroids.Count; ++i)
+            {
+                asteroids[i].position = Vector3.Zero;
+                while (Math.Abs(asteroid.position.X) < 75 || Math.Abs(asteroid.position.Y) < 75 || Math.Abs(asteroid.position.Z) < 75)
+                    asteroids[i].position = choosePosition(-675, 675);
             }
         }
 
@@ -408,7 +433,7 @@ namespace Project4
         {
             for(int i = 0; i < blastList.Count; ++i)
             {
-                blastList[i].position += blastList[i].velocity * updateSpeed + shipVelocity;
+                blastList[i].position += blastList[i].velocity * updateSpeed;// + shipVelocity;
 
                 if (blastList[i].position.X > positionRange || blastList[i].position.X < -positionRange)
                     blastList.Remove(blastList[i]);
@@ -541,7 +566,7 @@ namespace Project4
                     effect.Projection = projection;
 
                     // if a model is between camera and ship, make semi-transparent
-                    if (position.Z > shipLocation.Z && Math.Abs(position.X)<10 && Math.Abs(position.Y) <10)
+                    if (position.Z > shipLocation.Z && Math.Abs(position.X)<40 && Math.Abs(position.Y) <40)
                         effect.Alpha = .5f;
                     else
                         effect.Alpha = 1f;
