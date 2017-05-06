@@ -169,10 +169,10 @@ namespace Project4
             vertexBuffer.SetData<VertexPositionColorTexture>(vertices);
 
 			//gameplay variables
-            lives = 5;
+            lives = 3;
             score = 0;
             level = 1;
-            nextLevelScore = 200;
+            nextLevelScore = 500;
             gameover = false;
             
             isSpacePressed = false;
@@ -187,7 +187,7 @@ namespace Project4
             return new Vector3(random(-velocityRange, velocityRange), random(-velocityRange, velocityRange), random(-velocityRange, velocityRange));
         }
 
-        private Vector3 choosePosition(int lower, int upper) //!!!
+        private Vector3 choosePosition(int lower, int upper)
         {
            return new Vector3(random(lower, upper), random(lower, upper), random(lower, upper));
 
@@ -368,7 +368,7 @@ namespace Project4
                 if (hit)
                 {
                     shipTexture = hitShipTexture;
-                    //lives--;
+                    lives--;
                     minorShipHit.Play();
                 }
                 else
@@ -400,9 +400,8 @@ namespace Project4
             {
                 level++;
                 lives++;
-                nextLevelScore += level * level * 100; 
-                Console.WriteLine("level: " + level + "/tscore: " + score);
-                //play sound
+                nextLevelScore += level * 500; 
+                newLevel.Play();
                 addAsteroids(30);
             }
 
@@ -439,6 +438,7 @@ namespace Project4
             }
         }
 
+        //Add asteroids while the game is in progress
         private void addAsteroids(int count)
         {
             for (int i = 0; i < count; ++i) //generating all initial asteroids
@@ -448,6 +448,7 @@ namespace Project4
                 while (Math.Abs(asteroid.position.X) < 75 || Math.Abs(asteroid.position.Y) < 75 || Math.Abs(asteroid.position.Z) < 75)
                     asteroid.position = choosePosition(-positionRange, positionRange);
 
+                //new asteroids made here have a higher velocity than the initial ones, adding an extra challenge
                 asteroid.velocity = 10*chooseVelocity();
 
                 asteroid.scale = 2;
@@ -643,7 +644,6 @@ namespace Project4
 
                 if (Vector3.Distance(sphere1.Center, blast.position) < sphere1.Radius)
                 {
-                    Console.WriteLine("Hit asteroid!!");
                     blastList.Remove(blast);
                     return true; 
                 }
