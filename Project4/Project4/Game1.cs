@@ -40,6 +40,7 @@ namespace Project4
 
         private List<Blast> blastList;
         private Blast blast;
+        private Blast thruster; 
         public static VertexBuffer vertexBuffer;
 
         private int startingAsteroidCount = 200;
@@ -53,6 +54,7 @@ namespace Project4
         private Texture2D shipTexture;
         private Texture2D blastTexture;
         private Texture2D backdrop;
+        private Texture2D thrusterTexture; 
 
         public Vector3 shipOrientation = Vector3.Zero;
         public Vector3 shipLocation = Vector3.Zero;
@@ -136,6 +138,11 @@ namespace Project4
                 asteroids.Add(asteroid);
             }
 
+            //Creates thruster
+            thruster = new Blast();
+            thruster.scale = 0f;
+            thruster.velocity = Vector3.Zero;
+
             //Creates new list of blasts 
             blastList = new List<Blast>();
 
@@ -212,20 +219,27 @@ namespace Project4
             //USED FOR COLLISON DETECTION
             hitShipTexture = Content.Load<Texture2D>("Textures/hitShip");
             shipTexture = Content.Load<Texture2D>("Textures/ship");
+
+            //Open Source Galaxy texture courtesy of pixabay.com
             backdrop = Content.Load<Texture2D>("Textures/galaxy");
             tempTexture = shipTexture;
             blastTexture = Content.Load<Texture2D>("Textures/blast");
+            thrusterTexture = Content.Load<Texture2D>("Textures/thruster");
 
             //FONT
             font = (SpriteFont)Content.Load<SpriteFont>("font");
 
-            //AUDIO
+            //AUDIO courtesy of free-loops.com
             winEffect = Content.Load<SoundEffect>("Audio/winSound");
             newLevel = Content.Load<SoundEffect>("Audio/nextLevel");
             laser = Content.Load<SoundEffect>("Audio/laserSound");
             breakEffect = Content.Load<SoundEffect>("Audio/majorCrash"); //currently duplicate **
             minorShipHit = Content.Load<SoundEffect>("Audio/snare");
-            majorShipHit = Content.Load<SoundEffect>("Audio/majorCrash");
+            majorShipHit = Content.Load<SoundEffect>("Audio/finalCrash");
+            song = Content.Load<Song>("Audio/ambient");
+            
+            MediaPlayer.Volume = .5f;
+            MediaPlayer.Play(song);
         }
 
         /// <summary>
@@ -292,9 +306,14 @@ namespace Project4
                 //left control, forward movement
                 if (newState.IsKeyDown(Keys.LeftControl))
                 {
-                    shipVelocity -= world.Up;                 
-                }
+                    shipVelocity -= world.Up;
 
+                    thruster.scale = 10f;
+                    blastList.Add(thruster);
+
+                }
+                thruster.position = world.Up * 500f * -.05f;
+                
                 if (shipVelocity.X > 30f) shipVelocity.X = 30f;
                 if (shipVelocity.Y > 30f) shipVelocity.Y = 30f;
                 if (shipVelocity.Z > 30f) shipVelocity.Z = 30f;
@@ -303,6 +322,7 @@ namespace Project4
                 if (newState.IsKeyDown(Keys.RightControl))
                 {
                     shipVelocity = Vector3.Zero;
+                    blastList.Remove(thruster);
                 }
 
                 //Shoots a blast 
@@ -368,12 +388,11 @@ namespace Project4
 
             #region Scoring and Game Ending 
             //Check if the player has any remaining lives, and checks if the level
-            if (lives <= 0)
+            if (lives <= 0 && lose == false)
             {
                 gameover = true;
                 lose = true;
-                //Game over!!
-                //lose sound
+                majorShipHit.Play();
             }
 
             else if (score >= nextLevelScore)
@@ -385,7 +404,7 @@ namespace Project4
                 //play sound
             }
 
-            if (level == 5)
+            if (level >= 5 && win == false)
             {
                 gameover = true;
                 winEffect.Play();
@@ -422,8 +441,7 @@ namespace Project4
         {
             for (int i = 0; i < asteroids.Count; ++i)
             {
-                asteroids[i].position = Vector3.Zero;
-                while (Math.Abs(asteroid.position.X) < 75 || Math.Abs(asteroid.position.Y) < 75 || Math.Abs(asteroid.position.Z) < 75)
+                while (Math.Abs(asteroids[i].position.X) < 75 || Math.Abs(asteroids[i].position.Y) < 75 || Math.Abs(asteroids[i].position.Z) < 75)
                     asteroids[i].position = choosePosition(-675, 675);
             }
         }
