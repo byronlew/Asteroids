@@ -61,7 +61,6 @@ namespace Project4
         private KeyboardState newState;
         private bool isSpacePressed;
 
-        private int positionRange = 675;
         private int velocityRange = 30;
 
         //gameplay variables
@@ -70,8 +69,11 @@ namespace Project4
         int score;
         int lives;
         int nextLevelScore;
-        bool gameover;
-        
+        bool gameover = false;
+        bool win = false;
+        bool lose = false;
+        int positionRange = 675;
+
         private SoundEffect winEffect;
         private SoundEffect newLevel; //found- nextLevel
         private SoundEffect laser; //for blasts
@@ -124,7 +126,7 @@ namespace Project4
             for(int i = 0; i < startingAsteroidCount; ++i) //generating all initial asteroids
             {
                 asteroid = new Asteroid();
-                asteroid.position = choosePosition();
+                asteroid.position = choosePosition(-675, 675);
                 asteroid.velocity = chooseVelocity();
                 asteroid.scale = 2;
                 asteroids.Add(asteroid);
@@ -174,12 +176,12 @@ namespace Project4
             return new Vector3(random(-velocityRange, velocityRange), random(-velocityRange, velocityRange), random(-velocityRange, velocityRange));
         }
 
-        private Vector3 choosePosition() //!!!
+        private Vector3 choosePosition(int lower, int upper) //!!!
         {
             Vector3 p = Vector3.Zero; //initial value
             //while (IsCollision(ship, shipWorldMatrix, asteroids[i].type.model, asteroidLocation))
             {
-                 p = new Vector3(random(-positionRange, positionRange), random(-positionRange, positionRange), random(-positionRange, positionRange));
+                 p = new Vector3(random(lower, upper), random(lower, upper), random(lower, upper));
             }
             return p;
         }
@@ -266,13 +268,13 @@ namespace Project4
                 }
 
                 //Flipping the ship in 3D space
-                if (newState.IsKeyDown(Keys.Down))
+                if (newState.IsKeyDown(Keys.Up))
                 {
                     //zAngle += 0.03f;
                     shipOrientation.X += 0.03f;
                 }
 
-                else if (newState.IsKeyDown(Keys.Up))
+                else if (newState.IsKeyDown(Keys.Down))
                 {
                     //zAngle -= 0.03f;
                     shipOrientation.X -= 0.03f;
@@ -281,7 +283,7 @@ namespace Project4
                 world = Matrix.CreateRotationX(shipOrientation.X) * Matrix.CreateRotationZ(shipOrientation.Z);
                 #endregion
 
-                #region Ship Velocity and Shooting 
+            #region Ship Velocity and Shooting 
                 //left control, forward movement
                 if (newState.IsKeyDown(Keys.LeftControl))
                 {
@@ -308,7 +310,7 @@ namespace Project4
 
                 #endregion
 
-                #region Ship-Asteroid Collision
+            #region Ship-Asteroid Collision
                 //Detects if ship is hit by asteroid 
                 //foreach (var a in asteroids)
                 for (int i = 0; i < asteroids.Count; i++) //count or currentnumberasteroids
@@ -356,25 +358,25 @@ namespace Project4
             if (lives <= 0)
             {
                 gameover = true;
+                lose = true;
                 //Game over!!
                 //lose sound
             }
+
             else if (score >= nextLevelScore)
             {
                 level++;
                 lives++;
-                nextLevelScore += 20; //+= level * level * 100; 
+                nextLevelScore += level * level * 100; 
                 Console.WriteLine("level: " + level + "/tscore: " + score);
                 //play sound
             }
+
             if (level == 5)
             {
                 gameover = true;
                 winEffect.Play();
-                spriteBatch.Begin();
-                spriteBatch.DrawString(font, "You won!", new Vector2(200, 200), Color.Yellow);
-                //does not print :(
-                spriteBatch.End();
+                win = true; 
             } 
 
             base.Update(gameTime);
@@ -389,13 +391,13 @@ namespace Project4
                 temp.position += asteroids[i].velocity * updateSpeed + shipVelocity;
                 
                 if (asteroids[i].position.X > positionRange || asteroids[i].position.X < -positionRange)
-                    temp.position = choosePosition();
+                    temp.position = choosePosition(675, 750);
 
                 else if (asteroids[i].position.Y > positionRange || asteroids[i].position.Y < -positionRange)
-                    temp.position = choosePosition();
+                    temp.position = choosePosition(675, 750);
 
                 else if (asteroids[i].position.Z > positionRange || asteroids[i].position.Z < -positionRange)
-                    temp.position = choosePosition();
+                    temp.position = choosePosition(675, 750);
 
                 asteroids[i] = temp;
             }
@@ -471,13 +473,29 @@ namespace Project4
             GraphicsDevice.BlendState = BlendState.Opaque;
 
             spriteBatch.Begin(SpriteSortMode.Deferred, null, null, DepthStencilState.None);
-            
+
+            #region Text Drawn on Screen 
             //Draw Scoreboard
             spriteBatch.DrawString(font, "Number of lives: " + lives, new Vector2(50, 50), Color.Blue);
             spriteBatch.DrawString(font, "Points: " + score, new Vector2(650, 50), Color.Blue);
             spriteBatch.DrawString(font, "Level: " + level, new Vector2(50, 400), Color.Blue);
             spriteBatch.DrawString(font, "Remaining Asteroids: " + currentAsteroidCount, new Vector2(550, 400), Color.Blue);
             spriteBatch.End();
+
+            if (win)
+            {
+                spriteBatch.Begin();
+                spriteBatch.DrawString(font, "You won!", new Vector2(320, 200), Color.Yellow);
+                spriteBatch.End();
+            }
+
+            if (lose)
+            {
+                spriteBatch.Begin();
+                spriteBatch.DrawString(font, "You Lost!", new Vector2(320, 200), Color.Yellow);
+                spriteBatch.End();
+            }
+            #endregion
 
             base.Draw(gameTime);
         }
