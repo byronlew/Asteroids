@@ -25,6 +25,7 @@ namespace Project4
         BasicEffect basicEffect;
         SpriteBatch spriteBatch;
 
+        private SpriteFont font; 
         private Random getRandom = new Random();
 
         private bool hit = false;
@@ -41,8 +42,8 @@ namespace Project4
         private Blast blast1;
         private float blastScale;
 
-        private int startingAsteroidCount = 300;
-        private int currentAsteroidCount = 300;
+        private int startingAsteroidCount = 200;
+        private int currentAsteroidCount = 200;
 
         //USED FOR TESTING COLLISON DETECTION 
         private Texture2D hitShipTexture;
@@ -54,11 +55,11 @@ namespace Project4
 
         public Vector3 shipOrientation = Vector3.Zero;
         public Vector3 shipLocation = Vector3.Zero;
-
-        private float zAngle;
-        private float yAngle;
+        public Vector3 shipVelocity = Vector3.Zero;
         
-        private KeyboardState oldState;
+        private KeyboardState newState;
+        private bool isSpacePressed;
+
         private int positionRange = 675;
 
         //gameplay variables
@@ -66,6 +67,7 @@ namespace Project4
         int level;
         int score;
         int lives;
+        int nextLevelScore;
 
         //private Vector3 cameraForward = -Vector3.UnitX;
 
@@ -74,14 +76,12 @@ namespace Project4
         private Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), 800f / 480f, 0.01f, 1000f);
 
         #endregion
-        struct Asteroid
+        class Asteroid
         {
             public AsteroidType type;
             public Vector3 position;
             public Vector3 velocity;
-            public int scale; //pick one
-            public float size; //pick one
-            //public bool current;
+            public float scale;
         }
 
         struct AsteroidType
@@ -94,12 +94,7 @@ namespace Project4
         {
             public Vector3 position; // should start at zero
             public Vector3 velocity; // should be consistent
-            public float size;
-            public Texture2D texture; //all have the same. unnecessary.
-            public float timeToLive; //what data type?
-
-            //color? time to live (ends at asteroid, so may not be needed?) 
-            //public static VertexBuffer vertexBuffer;
+            public float scale;
         }
 
         public Game1()
@@ -126,20 +121,17 @@ namespace Project4
             asteroidTypes[2].texture = (Texture2D)Content.Load<Texture>("Textures/rock3");
             
             asteroids = new List<Asteroid>();
-
+            
             for(int i = 0; i < startingAsteroidCount; ++i) //generating all initial asteroids
             {
                 asteroid = new Asteroid();
-                asteroid.type = asteroidTypes[random(0, 2)]; // pick random type
+                asteroid.type = asteroidTypes[0]; // pick random type
                 asteroid.position = choosePosition();
                 asteroid.velocity = chooseVelocity();
-                asteroid.scale = 8; //maybe make weighted avg method if we want to vary this
-                asteroid.size = 8; // one of these is definitely redundant.
+                asteroid.scale = 2;
                 asteroids.Add(asteroid);
             }
 
-            //asteroids.Add(asteroid); //why is there a second one of this??
-            
             //Creates new list of blasts 
             blastList = new List<Blast>();
             blastScale = .15f;
@@ -171,6 +163,9 @@ namespace Project4
             lives = 3;
             score = 0;
             level = 1;
+            nextLevelScore = 200;
+
+            isSpacePressed = false;
 
             //remember to put in updates to these variables (lives, score) later
 
@@ -194,19 +189,11 @@ namespace Project4
             return new Vector3(random(-positionRange, positionRange), random(-positionRange, positionRange), random(-positionRange, positionRange));
         }
 
-        // when asteroid reaches edge of field, randomly assign another position on the boundary
-        private Vector3 chooseEdgePosition()
-        {
-            return Vector3.Zero;
-        }
-
+        
         //selects random number from v1 to v2
-        //NEED TO CHANGE 
         private int random(int v1, int v2)
         { 
-
             int rnd = getRandom.Next(v1, v2+1);
-
             return rnd;
         }
         #endregion
@@ -217,26 +204,18 @@ namespace Project4
         /// </summary>
         protected override void LoadContent()
         {
-            // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
             ship = Content.Load<Model>("Models/Ship");
 
             //USED FOR COLLISON DETECTION
             hitShipTexture = Content.Load<Texture2D>("Textures/hitShip");
-
             shipTexture = Content.Load<Texture2D>("Textures/ship");
             backdrop = Content.Load<Texture2D>("Textures/galaxy");
             tempTexture = shipTexture;
-
             blastTexture = Content.Load<Texture2D>("Textures/blast");
-            
-            //zAngle = 1;
-            //yAngle = 0;
-			
-			//FONT
 
-            //Font = Content.Load<SpriteFont>("font");
-            //winFont = Content.Load<SpriteFont>("Win Font");
+            //FONT
+            font = (SpriteFont)Content.Load<SpriteFont>("font");
         }
 
         /// <summary>
@@ -245,7 +224,6 @@ namespace Project4
         /// </summary>
         protected override void UnloadContent()
         {
-            // TODO: Unload any non ContentManager content here
             Content.Unload();
         }
 
@@ -266,9 +244,7 @@ namespace Project4
 
             incrementAsteroids(movementSpeed);
 
-            KeyboardState newState = Keyboard.GetState();  // get the newest state
-
-            
+            newState = Keyboard.GetState();  // get the newest state
 
             //Ship  Movement
             #region ShipMovement
@@ -278,14 +254,12 @@ namespace Project4
                 //yAngle += 0.03f;
                 shipOrientation.Z += 0.03f;
             }
-                
            
             else if (newState.IsKeyDown(Keys.Right))
             {
                 //yAngle -= 0.03f;
                 shipOrientation.Z -= 0.03f;
             }
-
 
             //Flipping the ship in 3D space
             if (newState.IsKeyDown(Keys.Down))
@@ -303,48 +277,99 @@ namespace Project4
             world = Matrix.CreateRotationX(shipOrientation.X) * Matrix.CreateRotationZ(shipOrientation.Z);
             #endregion
 
+            #region Ship Velocity and Shooting 
+            //left control, forward movement
+            if (newState.IsKeyDown(Keys.LeftControl))
+            {
+                shipVelocity -= world.Up;
+            }
+            //right control, forward movement
+            if (newState.IsKeyDown(Keys.RightControl))
+            {
+                shipVelocity = Vector3.Zero;
+            }
+
             //Shoots a blast 
             if (newState.IsKeyDown(Keys.Space))
-                shoot();
+            {
+                if (!isSpacePressed)
+                {
+                    shoot();
+                }
+
+                isSpacePressed = true;
+            }
+            else
+                isSpacePressed = false;
+
+            #endregion
 
             #region Ship-Asteroid Collision
             //Detects if ship is hit by asteroid 
-            foreach (var a in asteroids)
+            //foreach (var a in asteroids)
+            for (int i = 0; i < asteroids.Count; i++) //count or currentnumberasteroids
             {
-                Matrix asteroidLocation = Matrix.CreateTranslation(a.position);
-                if (IsCollision(ship, shipWorldMatrix, a.type.model, asteroidLocation))
+                Matrix asteroidLocation = Matrix.CreateTranslation(asteroids[i].position);
+                if (IsCollision(ship, shipWorldMatrix, asteroids[i].type.model, asteroidLocation))
                 {
                     //Console.WriteLine("Ship Hit! by Asteroid " + a.ToString());
                     hit = false;
                 }
+                //blast-asteroid collison here
+                foreach (var blast in blastList)
+                {
+                    if (hitCheck(asteroids[i].type.model, asteroidLocation, blast))
+                    {
+                        breakApart(asteroids[i], blast);
+                        break;
+                    }
+                }
+                //break;
             }
 
             //Ship will turn red if hit by asteroid: testing purposes
             if (!hit)
+            {
                 shipTexture = hitShipTexture;
+                lives--;
+                //sad sound
+            }
             else
                 shipTexture = tempTexture;
 
             hit = true;
             #endregion
 
-            //for any blasts, eventually
+            //Increment Blast
             incrementBlast(movementSpeed);
 
-            //Console.WriteLine(shipOrientation.X + ", " + shipOrientation.Y + ", " + shipOrientation.Z);
+            //leveling up
+            if (score>=nextLevelScore)
+            {
+                level++;
+                lives++;
+                nextLevelScore += level*level*100;
+                Console.WriteLine("level: " + level + "/tscore: " + score);
+                //play sound
+            }
+            
+            if (lives >= 0)
+            {
+                //Game over!!
+                //Sound
+            }
+
             base.Update(gameTime);
         }
-
+       
         private void incrementAsteroids(float updateSpeed)
         {
-
-            for (int i = 0; i < currentAsteroidCount; ++i)
+            for (int i = 0; i < asteroids.Count; ++i) //count or currentnumasteroids
             {
                 Asteroid temp = asteroids[i]; // needed because I can't access things in list directly like in array
-                // could replace all asteroids[i] with temp. not sure what's best
 
-                temp.position += asteroids[i].velocity * updateSpeed;
-
+                temp.position += asteroids[i].velocity * updateSpeed + shipVelocity;
+                
                 if (asteroids[i].position.X > positionRange || asteroids[i].position.X < -positionRange)
                     temp.position = choosePosition();
 
@@ -382,13 +407,14 @@ namespace Project4
         {
             //creates new Blast at location of ship, figures out direction/velocity for it
             blast1 = new Blast();
-            blast1.position = Vector3.Zero;
-            blast1.texture = blastTexture;
-            blast1.size = 10f;
+            //blast1.position = Vector3.Zero;
+            blast1.scale = 10f;
             blast1.velocity = world.Up*500f;
-            blast1.position += blast1.velocity * .05f;
+            blast1.position = blast1.velocity * .05f;
 
             blastList.Add(blast1);
+
+            //blast sound
         }
 
 
@@ -403,47 +429,21 @@ namespace Project4
 
             spriteBatch.Begin(SpriteSortMode.Deferred, null, null, DepthStencilState.None);
             spriteBatch.Draw(backdrop, new Rectangle(0, 0, 800, 480), Color.White);
-			
-			//Draws the scoreboard and what player wins, when the max points is met
-            //Should be last thing drawn 
-            /*
-            spriteBatch.DrawString(Font, "Number of lives: " + lives, new Vector2(50, 50), Color.Blue);
-
-            spriteBatch.DrawString(Font, "Points: " + score, new Vector2(650, 50), Color.Blue);
-
-            spriteBatch.DrawString(Font, "Level: " + level, new Vector2(50, 650), Color.Blue);
-            spriteBatch.DrawString(Font, "Remaining Asteroids: " + currentAsteroidCount, new Vector2(650, 650), Color.Blue);
-			*/
             spriteBatch.End();
-
+            
             //Implements a z-buffer
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
-
-
+            
             //Draw the ship at the origin 
             DrawModel(ship, Matrix.CreateRotationX(MathHelper.ToRadians(90)) * Matrix.CreateRotationZ(MathHelper.ToRadians(-90)) * world, shipTexture);
 
             //Draw the array of asteroids 
             foreach (var a in asteroids)
             {
-                    Matrix asteroidLocation = Matrix.CreateTranslation(a.position);
+                   Matrix asteroidLocation = Matrix.CreateTranslation(a.position);
 
-                    //Draw current asteroid
-                    DrawModel(a.type.model, Matrix.CreateTranslation(a.position), a.type.texture);
-
-                    //Ensures Asteroids are not drawn on top of each other, 
-                    //if current asteroid is drawn withing bounding sphere of previous asteroids, it is redrawn at a new location
-
-                    //NOT WORKING ATM 
-                    /*for (int j = 0; j < i; ++j)
-                    {
-                        Matrix asteroid2Location = Matrix.CreateTranslation(a.position);
-                        if (IsCollision(asteroids[j].type.model, asteroid2Location, a.type.model, asteroidLocation))
-                        {
-                            DrawModel(a.type.model, Matrix.CreateTranslation(choosePosition()), view, projection, a.type.texture);
-                        }
-                    }*/
-                
+                   //Draw current asteroid
+                   DrawModel(a.type.model, Matrix.CreateScale(a.scale) * Matrix.CreateTranslation(a.position), a.type.texture);
             }
 
             foreach(var blast in blastList){
@@ -453,6 +453,20 @@ namespace Project4
               
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
             GraphicsDevice.BlendState = BlendState.Opaque;
+
+            spriteBatch.Begin(SpriteSortMode.Deferred, null, null, DepthStencilState.None);
+            //Draws the scoreboard and what player wins, when the max points is met
+            //Should be last thing drawn 
+            spriteBatch.DrawString(font, "Number of lives: " + lives, new Vector2(50, 50), Color.Blue);
+
+            spriteBatch.DrawString(font, "Points: " + score, new Vector2(650, 50), Color.Blue);
+
+            spriteBatch.DrawString(font, "Level: " + level, new Vector2(50, 400), Color.Blue);
+
+            spriteBatch.DrawString(font, "Remaining Asteroids: " + currentAsteroidCount, new Vector2(550, 400), Color.Blue);
+
+            spriteBatch.End();
+
             base.Draw(gameTime);
         }
 
@@ -463,8 +477,6 @@ namespace Project4
             
            // DrawModel(asteroid.type.model, Matrix.CreateTranslation(blast.position), view, projection, asteroid.type.texture);
 
-
-
             //GraphicsDevice device = effect.GraphicsDevice;
             //device.SetVertexBuffer(vertexBuffer);
             
@@ -473,11 +485,10 @@ namespace Project4
             GraphicsDevice.RasterizerState = RasterizerState.CullNone;
             GraphicsDevice.SetVertexBuffer(vertexBuffer);
 
-
-            effect.World = Matrix.CreateScale(blast.size) * billboard;
+            effect.World = Matrix.CreateScale(blast.scale) * billboard;
             effect.View = view;
             effect.Projection = projection;
-            effect.Texture = blast.texture; // or blastTexture
+            effect.Texture = blastTexture; // or blastTexture
             effect.TextureEnabled = true;
             effect.LightingEnabled = false;
             effect.PreferPerPixelLighting = false;
@@ -485,9 +496,6 @@ namespace Project4
             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
             {
                 pass.Apply();
-
-
-
                 GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, 2);
             }
         }
@@ -501,7 +509,7 @@ namespace Project4
                     effect.EnableDefaultLighting();
                     effect.TextureEnabled = true;
                     effect.Texture = texture;
-                    effect.World = world;
+                    effect.World =  world; // temporary increase
                     effect.View = view;
                     effect.Projection = projection;
                 }
@@ -530,56 +538,91 @@ namespace Project4
             }
             return false;
         }
-
-        private void breakApart(Asteroid asteroid/*, Blast blast*/)
+        
+        private bool hitCheck(Model model1, Matrix world1, Blast blast)
         {
-            //vector
-            Vector3 blastVector = chooseVelocity();
-
-            if (asteroid.size <= 8) //largest is 3, smallest is 1. could be .25
+            for (int meshIndex1 = 0; meshIndex1 < model1.Meshes.Count; meshIndex1++)
             {
+                BoundingSphere sphere1 = model1.Meshes[meshIndex1].BoundingSphere;
+                sphere1 = sphere1.Transform(world1);
+                //if dist btwn center and point < sphere.radius
+
+                if (Vector3.Distance(sphere1.Center, blast.position) < sphere1.Radius)
+                {
+                    Console.WriteLine("Hit asteroid!!");
+                    blastList.Remove(blast);
+                    return true; 
+                }
+
+            }
+            return false;
+        }
+
+        private void breakApart(Asteroid asteroid, Blast blast)
+        {
+            //crash sound
+
+            Vector3 explosionVector;
+
+            if (asteroid.scale < .75) //largest is 3, smallest is 1. could be .25
+            {
+                //make a blast/explosion at the asteroid's previous position
+                score += 150; 
                 asteroids.Remove(asteroid); //not sure if this will work, or remove other random asteroid.
                 currentAsteroidCount--;
             }
             else
             {
-                Asteroid copy1 = asteroid; //does this need to be a new asteroid also (????)
-                copy1.size = asteroid.size * .5f;
-                copy1.velocity = chooseVelocity();
+                if (asteroid.scale == 2)
+                    score += 50;
+
+                if (asteroid.scale == 1)
+                    score += 100; 
+
+
+                asteroid.scale /= 2;
+
+                
+                Asteroid copy1 = new Asteroid(); //does this need to be a new asteroid also (????)
+                copy1.scale = asteroid.scale;
                 copy1.type = asteroid.type; // we should get away from type
                 copy1.position = asteroid.position;
 
                 Asteroid copy2 = new Asteroid();
-                copy2.size = asteroid.size * .5f;
-                //copy2.velocity = chooseVelocity();
+                copy2.scale = asteroid.scale;
                 copy2.type = asteroid.type; // we want to get away from using type (just texture.)
                 copy2.position = asteroid.position;
 
                 //find explosion vector:
                 //perp to asteroid velocity and blaster velocity found using the cross product, then normalize it
-                //this may require a seperate angular and non-angular velocity (??)
-               
-                copy2.velocity =  Vector3.Normalize(Vector3.Cross(blastVector, copy1.velocity));
+                explosionVector =  Vector3.Normalize(Vector3.Cross(asteroid.velocity, blast.velocity));
 
-                //result.position set to half asteroid's radius away (along explosion vector)
+                //*******use bounding sphere for radius, unless radius is the scale (which is a good idea)
+                
+                // result.position set to half asteroid's radius away (along explosion vector)
                 // these really should be different and in relation 
                 // how do we determine the asteroid's radius? (?????)
-                copy1.position.X += asteroid.size / 2; //just on X axis to make something work.
-                copy2.position.X -= asteroid.size / 2;
+
+                // should be scale
+                
+                //new position = old position plus (radius) (vectorbetweentwo)
+
+                copy1.position += asteroid.scale*explosionVector; //just on X axis to make something work.
+                copy2.position -= asteroid.scale*explosionVector;
+
+                copy1.velocity += (40f / asteroid.scale)*explosionVector;
+                copy2.velocity -= (40f / asteroid.scale) * explosionVector;
+                
+                asteroids.Remove(asteroid);
 
                 asteroids.Add(copy1);
                 asteroids.Add(copy2);
 
-                asteroids.Remove(asteroid); // will this successfully remove the asteroid (?????)
+                // will this successfully remove the asteroid (?????)
 
                 currentAsteroidCount++;
+                
             }
-           
-
-            //else:
-            
-            //take current asteroid and halve its size. figure out scaling matrix
         }
-
     }
 }
